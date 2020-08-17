@@ -1,13 +1,13 @@
 package apis
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/user"
 )
 
-func Router() *mux.Router {
+func Router() *gin.Engine {
 	logrus.Info("starting server")
 
 	var users = map[string]string{
@@ -15,12 +15,9 @@ func Router() *mux.Router {
 		"user2": "password2",
 	}
 
-	r := mux.NewRouter()
-	r.HandleFunc("/token", GetToken(user.NewSampleRepository(users))).
-		Methods("POST")
-	r.HandleFunc("/welcome", welcome)
-	r.HandleFunc("/refresh", refresh)
-	r.HandleFunc("/token", refresh).Methods("DELETE")
-
+	r := gin.Default()
+	r.POST("/token", GetToken(user.NewSampleRepository(users)))
+	r.GET("/welcome", welcome)
+	r.PATCH("/token", Refresh)
 	return r
 }

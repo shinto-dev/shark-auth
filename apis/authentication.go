@@ -1,10 +1,10 @@
 package apis
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/autherrors"
@@ -24,85 +24,50 @@ type GetTokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func GetToken(userRepo user.UserRepository) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetToken(userRepo user.UserRepository) func(c *gin.Context) {
+	return func(c *gin.Context) {
 		var getTokenRequest GetTokenRequest
-		err := json.NewDecoder(r.Body).Decode(&getTokenRequest)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+		if err := c.ShouldBindJSON(&getTokenRequest); err != nil {
+			c.JSON(http.StatusBadRequest, "Invalid json provided")
 			return
 		}
 
 		if !userRepo.IsValid(getTokenRequest.UserName, getTokenRequest.Password) {
 			logrus.Error("password does not match")
-			w.WriteHeader(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
 			return
 		}
 
 		tkn, err := token.CreateJwtToken(getTokenRequest.UserName)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			c.Status(http.StatusInternalServerError)
 			return
 		}
 
 		response := GetTokenResponse{AccessToken: tkn}
-
-		w.Header().Add("content-type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		c.JSON(http.StatusOK, response)
 	}
 }
 
-func welcome(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(TOKEN)
+func Refresh(c *gin.Context) {
+	tknStr, err := c.Cookie(TOKEN)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			logrus.Error("cookie not found")
-			w.WriteHeader(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
 			return
 		}
-		w.WriteHeader(http.StatusBadRequest)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
-	tokenString := cookie.Value
-
-	claims, err := token.ParseJwtToken(tokenString)
-	if err != nil {
-		if err == autherrors.ErrAuthenticationFailed {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	logrus.Infof("request received from user: %s", claims.Username)
-
-	w.Write([]byte("Hello world"))
-}
-
-// takes the previous token (which is still valid), and returns a new token with a renewed expiry time.
-// To minimize misuse of a JWT, the expiry time is usually kept in the order of a few minutes.
-// Typically the client application would refresh the token in the background.
-func refresh(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(TOKEN)
-	if err != nil {
-		if err == http.ErrNoCookie {
-			logrus.Error("cookie not found")
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	tknStr := cookie.Value
 	claims, err := token.ParseJwtToken(tknStr)
 	if err != nil {
 		if err == autherrors.ErrAuthenticationFailed {
-			w.WriteHeader(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
 			return
 		}
-		w.WriteHeader(http.StatusBadRequest)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
@@ -110,18 +75,43 @@ func refresh(w http.ResponseWriter, r *http.Request) {
 	// In this case, a new tkn will only be issued if the old token is within
 	// 30 seconds of expiry. Otherwise, return a bad request status
 	if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
-		w.WriteHeader(http.StatusBadRequest)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	jwtToken, err := token.CreateJwtToken(claims.Username)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
 	response := GetTokenResponse{AccessToken: jwtToken}
+	c.JSON(http.StatusOK, response)
+}
 
-	w.Header().Add("content-type", "application/json")
-	json.NewEncoder(w).Encode(response)
+
+func welcome(c *gin.Context) {
+	tokenString, err := c.Cookie(TOKEN)
+	if err != nil {
+		if err == http.ErrNoCookie {
+			logrus.Error("cookie not found")
+			c.Status(http.StatusUnauthorized)
+			return
+		}
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	claims, err := token.ParseJwtToken(tokenString)
+	if err != nil {
+		if err == autherrors.ErrAuthenticationFailed {
+			c.Status(http.StatusUnauthorized)
+			return
+		}
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	logrus.Infof("request received from user: %s", claims.Username)
+
+	c.Writer.Write([]byte("Hello world"))
 }
