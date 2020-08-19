@@ -2,6 +2,7 @@ package apis
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -38,30 +39,34 @@ func GetToken(userRepo user.UserRepository) func(c *gin.Context) {
 			return
 		}
 
-		tkn, err := token.CreateJwtToken(getTokenRequest.UserName)
+		tkn, err := token.CreateAccessToken(getTokenRequest.UserName)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
 
-		response := GetTokenResponse{AccessToken: tkn}
+		refreshTkn, err := token.CreateRefreshToken(getTokenRequest.UserName)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		response := GetTokenResponse{
+			AccessToken:  tkn,
+			RefreshToken: refreshTkn,
+		}
 		c.JSON(http.StatusOK, response)
 	}
 }
 
 func Refresh(c *gin.Context) {
-	tknStr, err := c.Cookie(TOKEN)
-	if err != nil {
-		if err == http.ErrNoCookie {
-			logrus.Error("cookie not found")
-			c.Status(http.StatusUnauthorized)
-			return
-		}
-		c.Status(http.StatusBadRequest)
-		return
+	accessToken := extractToken(c)
+	if accessToken == "" {
+		c.JSON(http.StatusUnauthorized, "token not valid")
 	}
+	refreshToken := c.GetHeader("refresh-token")
 
-	claims, err := token.ParseJwtToken(tknStr)
+	claims, err := token.ParseAccessToken(accessToken)
 	if err != nil {
 		if err == autherrors.ErrAuthenticationFailed {
 			c.Status(http.StatusUnauthorized)
@@ -74,12 +79,22 @@ func Refresh(c *gin.Context) {
 	// We ensure that a new token is not issued until enough time has elapsed
 	// In this case, a new tkn will only be issued if the old token is within
 	// 30 seconds of expiry. Otherwise, return a bad request status
-	if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
+	if claims.ExpiresAt.Sub(time.Now()) > 30*time.Second {
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
-	jwtToken, err := token.CreateJwtToken(claims.Username)
+	var tokenValid bool
+	if tokenValid, err = token.IsRefreshTokenValid(refreshToken, claims.Username); err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	if !tokenValid {
+		c.JSON(http.StatusUnauthorized, "refresh token not valid")
+		return
+	}
+
+	jwtToken, err := token.CreateAccessToken(claims.Username)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
@@ -89,12 +104,15 @@ func Refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func DeleteToken(c *gin.Context) {
+	accessToken := extractToken(c)
+	if accessToken == "" {
+		c.JSON(http.StatusUnauthorized, "token not valid")
+	}
 
-func welcome(c *gin.Context) {
-	tokenString, err := c.Cookie(TOKEN)
+	err := token.DeleteAccessToken(accessToken)
 	if err != nil {
-		if err == http.ErrNoCookie {
-			logrus.Error("cookie not found")
+		if err == autherrors.ErrAuthenticationFailed {
 			c.Status(http.StatusUnauthorized)
 			return
 		}
@@ -102,7 +120,27 @@ func welcome(c *gin.Context) {
 		return
 	}
 
-	claims, err := token.ParseJwtToken(tokenString)
+	// todo add session id and remove the refresh token
+
+	c.Status(http.StatusOK)
+}
+
+func extractToken(c *gin.Context) string {
+	bearerToken := c.GetHeader("Authorization")
+	strArr := strings.Split(bearerToken, " ")
+	if len(strArr) == 2 {
+		return strArr[1]
+	}
+	return ""
+}
+
+func welcome(c *gin.Context) {
+	accessToken := extractToken(c)
+	if accessToken == "" {
+		c.JSON(http.StatusUnauthorized, "token not valid")
+	}
+
+	claims, err := token.ParseAccessToken(accessToken)
 	if err != nil {
 		if err == autherrors.ErrAuthenticationFailed {
 			c.Status(http.StatusUnauthorized)

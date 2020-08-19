@@ -19,5 +19,6 @@ func Router() *gin.Engine {
 	r.POST("/token", GetToken(user.NewSampleRepository(users)))
 	r.GET("/welcome", welcome)
 	r.PATCH("/token", Refresh)
+	r.DELETE("/token", DeleteToken)
 	return r
 }
