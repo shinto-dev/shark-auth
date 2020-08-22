@@ -16,7 +16,7 @@ func DeleteToken(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, "token not valid")
 	}
 
-	err := token.DeleteAccessToken(accessToken)
+	err := accesstoken.DeleteAccessToken(accessToken)
 	if err != nil {
 		if err == autherrors.ErrAuthenticationFailed {
 			c.Status(http.StatusUnauthorized)

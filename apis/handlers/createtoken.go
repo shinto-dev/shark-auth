@@ -4,8 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 
+	"shark-auth/pkg/refreshtoken"
 	"shark-auth/pkg/token"
 	"shark-auth/pkg/user"
 )
@@ -17,10 +19,10 @@ type GetTokenRequest struct {
 
 type GetTokenResponse struct {
 	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
-func GetToken(userRepo user.UserRepository) func(c *gin.Context) {
+func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var getTokenRequest GetTokenRequest
 		if err := c.ShouldBindJSON(&getTokenRequest); err != nil {
@@ -28,23 +30,30 @@ func GetToken(userRepo user.UserRepository) func(c *gin.Context) {
 			return
 		}
 
-		validUser, err := userRepo.IsValid(getTokenRequest.UserName, getTokenRequest.Password)
-		// todo handle error or panic from calling function
-		if !validUser {
+		currentUser, err := userRepo.Get(getTokenRequest.UserName, getTokenRequest.Password)
+		if err != nil {
+			// todo panic from calling function
+			logrus.WithError(err).Error("error while retrieving user")
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		if currentUser == (user.User{}) {
 			logrus.WithField("user_name", getTokenRequest.UserName).
 				Error("password does not match")
 			c.Status(http.StatusUnauthorized)
 			return
 		}
 
-		tkn, err := token.CreateAccessToken(getTokenRequest.UserName)
+		tkn, err := accesstoken.CreateAccessToken(getTokenRequest.UserName)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
 
-		refreshTkn, err := token.CreateRefreshToken(getTokenRequest.UserName)
+		refreshTkn, err := refreshtoken.CreateRefreshToken(db, currentUser.UserId)
 		if err != nil {
+			logrus.WithError(err).Error("refresh token creation failed")
 			c.Status(http.StatusInternalServerError)
 			return
 		}

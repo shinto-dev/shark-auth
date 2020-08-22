@@ -16,7 +16,7 @@ func Welcome(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, "token not valid")
 	}
 
-	claims, err := token.ParseAccessToken(accessToken)
+	claims, err := accesstoken.ParseAccessToken(accessToken)
 	if err != nil {
 		if err == autherrors.ErrAuthenticationFailed {
 			c.Status(http.StatusUnauthorized)

@@ -1,12 +1,14 @@
 package user
 
 import (
+	"database/sql"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 )
 
 type UserRepository interface {
-	IsValid(userName string, password string) (bool, error)
+	Get(userName string, password string) (User, error)
 }
 
 type UserRepositoryImpl struct {
@@ -19,20 +21,23 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	}
 }
 
-func (u UserRepositoryImpl) IsValid(userName string, password string) (bool, error) {
+func (u UserRepositoryImpl) Get(userName string, password string) (User, error) {
 	// todo add encryption for passwords
-	row := u.db.QueryRow("select count(1) from users where user_name=$1 AND password=$2", userName, password)
+	row := u.db.QueryRowx("select user_id, user_name from users where user_name=$1 AND password=$2", userName, password)
 	if row.Err() != nil {
 		logrus.WithError(row.Err()).
 			Error("error while querying DB")
-		return false, row.Err()
+		return User{}, row.Err()
 	}
 
-	var count int
-	err := row.Scan(&count)
+	var user User
+	err := row.StructScan(&user)
 	if err != nil {
-		return false, err
+		if err == sql.ErrNoRows {
+			return User{}, nil
+		}
+		return User{}, err
 	}
 
-	return count == 1, nil
+	return user, nil
 }

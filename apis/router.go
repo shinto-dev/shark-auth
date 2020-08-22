@@ -13,9 +13,9 @@ func API(db *sqlx.DB) *gin.Engine {
 	logrus.Info("starting server")
 
 	r := gin.Default()
-	r.POST("/token", handlers.GetToken(user.NewUserRepository(db)))
+	r.POST("/token", handlers.GetToken(user.NewUserRepository(db), db))
 	r.GET("/welcome", handlers.Welcome)
-	r.PATCH("/token", handlers.Refresh)
+	r.PATCH("/token", handlers.RefreshToken(db))
 	r.DELETE("/token", handlers.DeleteToken)
 	return r
 }
