@@ -25,3 +25,7 @@ func IsRefreshTokenValid(refreshToken string, userName string) (bool, error) {
 
 	return refreshTokenUserName == userName, nil
 }
+
+func DeleteRefreshToken(refreshToken string) error {
+	return RemoveRefreshToken(refreshToken)
+}

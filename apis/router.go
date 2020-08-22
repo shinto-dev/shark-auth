@@ -2,23 +2,20 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 
-	"shark-auth/user"
+	"shark-auth/apis/handlers"
+	"shark-auth/pkg/user"
 )
 
-func Router() *gin.Engine {
+func API(db *sqlx.DB) *gin.Engine {
 	logrus.Info("starting server")
 
-	var users = map[string]string{
-		"user1": "password1",
-		"user2": "password2",
-	}
-
 	r := gin.Default()
-	r.POST("/token", GetToken(user.NewSampleRepository(users)))
-	r.GET("/welcome", welcome)
-	r.PATCH("/token", Refresh)
-	r.DELETE("/token", DeleteToken)
+	r.POST("/token", handlers.GetToken(user.NewUserRepository(db)))
+	r.GET("/welcome", handlers.Welcome)
+	r.PATCH("/token", handlers.Refresh)
+	r.DELETE("/token", handlers.DeleteToken)
 	return r
 }

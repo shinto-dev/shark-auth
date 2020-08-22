@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"shark-auth/redis_client"
+	"shark-auth/foundation/redis_client"
 )
 
 func SaveRefreshToken(userID string, refreshToken string, expiresAt time.Time) error {
@@ -18,6 +18,10 @@ func GetRefreshToken(refreshToken string) (string, error) {
 	}
 
 	return cmd.Val(), nil
+}
+
+func RemoveRefreshToken(refreshToken string) error {
+	return redis_client.Client.Unlink(refreshTokenKey(refreshToken)).Err()
 }
 
 func BlacklistAccessToken(accessToken string, expiresAt time.Time) error {
