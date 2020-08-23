@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/autherrors"
-	"shark-auth/pkg/token"
+	"shark-auth/pkg/accesstoken"
 )
 
 func Welcome(c *gin.Context) {

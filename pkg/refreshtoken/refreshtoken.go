@@ -7,7 +7,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// todo move this to postgres repo
 func CreateRefreshToken(db *sqlx.DB, userID string) (string, error) {
 	userRefreshToken := UserRefreshToken{
 		UserID:       userID,

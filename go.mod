@@ -14,4 +14,5 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 )

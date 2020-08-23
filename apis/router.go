@@ -13,6 +13,7 @@ func API(db *sqlx.DB) *gin.Engine {
 	logrus.Info("starting server")
 
 	r := gin.Default()
+	r.POST("/signup", handlers.Signup(user.NewUserRepository(db)))
 	r.POST("/token", handlers.GetToken(user.NewUserRepository(db), db))
 	r.GET("/welcome", handlers.Welcome)
 	r.PATCH("/token", handlers.RefreshToken(db))

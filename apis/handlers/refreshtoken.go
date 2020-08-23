@@ -9,8 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/autherrors"
+	"shark-auth/pkg/accesstoken"
 	"shark-auth/pkg/refreshtoken"
-	"shark-auth/pkg/token"
 )
 
 func RefreshToken(db *sqlx.DB) func(c *gin.Context) {

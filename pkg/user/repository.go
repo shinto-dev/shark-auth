@@ -8,7 +8,8 @@ import (
 )
 
 type UserRepository interface {
-	Get(userName string, password string) (User, error)
+	Get(userName string) (User, error)
+	Create(user User) error
 }
 
 type UserRepositoryImpl struct {
@@ -21,9 +22,15 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	}
 }
 
-func (u UserRepositoryImpl) Get(userName string, password string) (User, error) {
-	// todo add encryption for passwords
-	row := u.db.QueryRowx("select user_id, user_name from users where user_name=$1 AND password=$2", userName, password)
+func (u UserRepositoryImpl) Create(user User) error {
+	_, err := u.db.NamedExec("insert into users (user_id, user_name, password, created_at, updated_at)"+
+		" values (:user_id, :user_name, :password, :created_at, :updated_at)", user)
+	return err
+}
+
+func (u UserRepositoryImpl) Get(userName string) (User, error) {
+	// todo add unique constraint for userName
+	row := u.db.QueryRowx("select user_id, user_name, password from users where user_name=$1", userName)
 	if row.Err() != nil {
 		logrus.WithError(row.Err()).
 			Error("error while querying DB")

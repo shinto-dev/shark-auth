@@ -6,9 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 
+	"shark-auth/pkg/accesstoken"
 	"shark-auth/pkg/refreshtoken"
-	"shark-auth/pkg/token"
 	"shark-auth/pkg/user"
 )
 
@@ -30,7 +31,7 @@ func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 			return
 		}
 
-		currentUser, err := userRepo.Get(getTokenRequest.UserName, getTokenRequest.Password)
+		currentUser, err := userRepo.Get(getTokenRequest.UserName)
 		if err != nil {
 			// todo panic from calling function
 			logrus.WithError(err).Error("error while retrieving user")
@@ -38,7 +39,7 @@ func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 			return
 		}
 
-		if currentUser == (user.User{}) {
+		if currentUser == (user.User{}) || !passwordMatch(currentUser.Password, getTokenRequest.Password) {
 			logrus.WithField("user_name", getTokenRequest.UserName).
 				Error("password does not match")
 			c.Status(http.StatusUnauthorized)
@@ -64,4 +65,8 @@ func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, response)
 	}
+}
+
+func passwordMatch(hashedPassword string, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
 }
