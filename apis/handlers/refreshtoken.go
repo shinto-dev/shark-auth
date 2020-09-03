@@ -22,6 +22,7 @@ func RefreshToken(db *sqlx.DB) func(c *gin.Context) {
 		}
 		refreshToken := c.GetHeader("refresh-token")
 
+		// todo: refresh token only when access token is expired.
 		claims, err := accesstoken.ParseAccessToken(accessToken)
 		if err != nil {
 			if err == autherrors.ErrAuthenticationFailed {
@@ -51,7 +52,7 @@ func RefreshToken(db *sqlx.DB) func(c *gin.Context) {
 			return
 		}
 
-		jwtToken, err := accesstoken.CreateAccessToken(claims.Username)
+		jwtToken, err := accesstoken.CreateAccessToken(claims.Username, claims.SessionID)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return

@@ -16,8 +16,8 @@ func NewUserRefreshTokenRepository(db *sqlx.DB) UserRefreshTokenRepository {
 }
 
 func (r *UserRefreshTokenRepository) Create(refreshToken UserRefreshToken) error {
-	_, err := r.db.NamedExec("insert into refresh_tokens (refresh_token, user_id, expires_at, created_at)"+
-		" values (:refresh_token, :user_id, :expires_at, :created_at)", refreshToken)
+	_, err := r.db.NamedExec("insert into refresh_tokens (refresh_token, user_id, session_id, expires_at, created_at)"+
+		" values (:refresh_token, :user_id, :session_id, :expires_at, :created_at)", refreshToken)
 	if err != nil {
 		return err
 	}
@@ -47,6 +47,14 @@ func (r *UserRefreshTokenRepository) Remove(refreshToken string) error {
 	_, err := r.db.NamedExec("delete from refresh_tokens where refresh_token=:refresh_token", map[string]string{
 		"refresh_token": refreshToken,
 	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *UserRefreshTokenRepository) RemoveBySessionID(sessionID string) error {
+	_, err := r.db.Exec("update refresh_tokens set deleted=true where session_id=$1", sessionID)
 	if err != nil {
 		return err
 	}

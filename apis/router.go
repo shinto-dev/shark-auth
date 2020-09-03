@@ -17,6 +17,6 @@ func API(db *sqlx.DB) *gin.Engine {
 	r.POST("/token", handlers.GetToken(user.NewUserRepository(db), db))
 	r.GET("/welcome", handlers.Welcome)
 	r.PATCH("/token", handlers.RefreshToken(db))
-	r.DELETE("/token", handlers.DeleteToken)
+	r.DELETE("/token", handlers.DeleteToken(db))
 	return r
 }

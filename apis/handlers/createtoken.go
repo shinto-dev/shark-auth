@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 
@@ -46,13 +47,16 @@ func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 			return
 		}
 
-		tkn, err := accesstoken.CreateAccessToken(getTokenRequest.UserName)
+		// todo more session details, device info(or browser info)?
+		sessionID := uuid.NewV4().String()
+
+		tkn, err := accesstoken.CreateAccessToken(getTokenRequest.UserName, sessionID)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
 
-		refreshTkn, err := refreshtoken.CreateRefreshToken(db, currentUser.UserId)
+		refreshTkn, err := refreshtoken.CreateRefreshToken(db, currentUser.UserId, sessionID)
 		if err != nil {
 			logrus.WithError(err).Error("refresh token creation failed")
 			c.Status(http.StatusInternalServerError)

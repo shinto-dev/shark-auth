@@ -12,18 +12,19 @@ import (
 var jwtKey = []byte("my_secret_key")
 
 type Claims struct {
-	Username     string `json:"username"`
-	RefreshToken string `json:"refresh_uuid,omitempty"`
+	Username  string `json:"username"`
+	SessionID string `json:"sid"`
 	jwt.StandardClaims
 }
 
-func CreateAccessToken(userName string) (string, error) {
+func CreateAccessToken(userName string, sessionID string) (string, error) {
 	expireAt := time.Now().Add(5 * time.Minute)
 	claims := Claims{
 		Username: userName,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: jwt.At(expireAt),
 		},
+		SessionID: sessionID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

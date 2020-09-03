@@ -7,10 +7,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func CreateRefreshToken(db *sqlx.DB, userID string) (string, error) {
+func CreateRefreshToken(db *sqlx.DB, userID string, sessionID string) (string, error) {
 	userRefreshToken := UserRefreshToken{
 		UserID:       userID,
 		RefreshToken: uuid.NewV4().String(),
+		SessionID:    sessionID,
 		ExpiresAt:    time.Now().Add(7 * 24 * time.Hour),
 		CreatedAt:    time.Now(),
 	}
@@ -32,6 +33,11 @@ func IsRefreshTokenValid(db *sqlx.DB, refreshToken string, userID string) (bool,
 
 	//todo return userRefreshToken.UserID == userID, nil
 	return userRefreshToken != (UserRefreshToken{}), nil
+}
+
+func DeleteRefreshTokenBySessionId(db *sqlx.DB, sessionID string) error {
+	repo := NewUserRefreshTokenRepository(db)
+	return repo.RemoveBySessionID(sessionID)
 }
 
 func DeleteRefreshToken(db *sqlx.DB, refreshToken string) error {

@@ -5,30 +5,43 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 
 	"shark-auth/autherrors"
 	"shark-auth/pkg/accesstoken"
+	"shark-auth/pkg/refreshtoken"
 )
 
-func DeleteToken(c *gin.Context) {
-	accessToken := extractToken(c)
-	if accessToken == "" {
-		c.JSON(http.StatusUnauthorized, "token not valid")
-	}
+func DeleteToken(db *sqlx.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		accessToken := extractToken(c)
+		if accessToken == "" {
+			c.JSON(http.StatusUnauthorized, "token not valid")
+		}
 
-	err := accesstoken.DeleteAccessToken(accessToken)
-	if err != nil {
-		if err == autherrors.ErrAuthenticationFailed {
+		claims, err := accesstoken.ParseAccessToken(accessToken)
+		if err != nil {
 			c.Status(http.StatusUnauthorized)
 			return
+			// todo: handle generic errors if any
 		}
-		c.Status(http.StatusBadRequest)
-		return
+
+		err = accesstoken.DeleteAccessToken(accessToken)
+		if err != nil {
+			if err == autherrors.ErrAuthenticationFailed {
+				c.Status(http.StatusUnauthorized)
+				return
+			}
+			c.Status(http.StatusBadRequest)
+			return
+		}
+
+		err = refreshtoken.DeleteRefreshTokenBySessionId(db, claims.SessionID)
+		if err!=nil {
+			c.Status(http.StatusInternalServerError)
+		}
+		c.Status(http.StatusOK)
 	}
-
-	// todo add session id and remove the refresh token
-
-	c.Status(http.StatusOK)
 }
 
 func extractToken(c *gin.Context) string {
