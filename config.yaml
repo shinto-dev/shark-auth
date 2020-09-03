@@ -1,0 +1,9 @@
+database:
+  host: "localhost"
+  name: "shark-auth"
+  user: "shintop"
+  password:
+
+redis:
+  host: "localhost"
+  port:
