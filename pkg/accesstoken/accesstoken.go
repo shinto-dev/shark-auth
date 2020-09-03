@@ -12,15 +12,15 @@ import (
 var jwtKey = []byte("my_secret_key")
 
 type Claims struct {
-	Username  string `json:"username"`
+	UserID    string `json:"user_id"`
 	SessionID string `json:"sid"`
 	jwt.StandardClaims
 }
 
-func CreateAccessToken(userName string, sessionID string) (string, error) {
+func Create(userID string, sessionID string) (string, error) {
 	expireAt := time.Now().Add(5 * time.Minute)
 	claims := Claims{
-		Username: userName,
+		UserID: userID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: jwt.At(expireAt),
 		},
@@ -31,7 +31,7 @@ func CreateAccessToken(userName string, sessionID string) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
-func ParseAccessToken(token string) (Claims, error) {
+func Parse(token string) (Claims, error) {
 	var claims Claims
 	tkn, err := jwt.ParseWithClaims(token, &claims, func(tkn *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
@@ -73,8 +73,8 @@ func checkUserIsAlreadySignedOut(token string) (bool, error) {
 	return false, nil
 }
 
-func DeleteAccessToken(accessToken string) error {
-	claims, err := ParseAccessToken(accessToken)
+func Delete(accessToken string) error {
+	claims, err := Parse(accessToken)
 	if err != nil {
 		return autherrors.ErrAuthenticationFailed
 	}

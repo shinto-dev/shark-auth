@@ -25,7 +25,7 @@ func (r *UserRefreshTokenRepository) Create(refreshToken UserRefreshToken) error
 }
 
 func (r *UserRefreshTokenRepository) Get(refreshToken string) (UserRefreshToken, error) {
-	row := r.db.QueryRowx("select * from refresh_tokens where refresh_token=$1", refreshToken)
+	row := r.db.QueryRowx("select * from refresh_tokens where refresh_token=$1 and deleted=false", refreshToken)
 	if row.Err() != nil {
 		logrus.WithError(row.Err()).
 			Error("error while querying DB")
@@ -38,19 +38,9 @@ func (r *UserRefreshTokenRepository) Get(refreshToken string) (UserRefreshToken,
 		if err == sql.ErrNoRows {
 			return UserRefreshToken{}, nil
 		}
+		return UserRefreshToken{}, err
 	}
 	return userRefreshToken, nil
-}
-
-func (r *UserRefreshTokenRepository) Remove(refreshToken string) error {
-	// todo soft delete
-	_, err := r.db.NamedExec("delete from refresh_tokens where refresh_token=:refresh_token", map[string]string{
-		"refresh_token": refreshToken,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (r *UserRefreshTokenRepository) RemoveBySessionID(sessionID string) error {

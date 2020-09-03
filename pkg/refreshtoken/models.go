@@ -10,4 +10,5 @@ type UserRefreshToken struct {
 	SessionID    string    `db:"session_id"`
 	ExpiresAt    time.Time `db:"expires_at"`
 	CreatedAt    time.Time `db:"created_at"`
+	Deleted      bool      `db:"deleted"`
 }

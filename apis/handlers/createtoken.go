@@ -50,13 +50,13 @@ func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 		// todo more session details, device info(or browser info)?
 		sessionID := uuid.NewV4().String()
 
-		tkn, err := accesstoken.CreateAccessToken(getTokenRequest.UserName, sessionID)
+		tkn, err := accesstoken.Create(currentUser.UserId, sessionID)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
 
-		refreshTkn, err := refreshtoken.CreateRefreshToken(db, currentUser.UserId, sessionID)
+		refreshTkn, err := refreshtoken.Create(db, currentUser.UserId, sessionID)
 		if err != nil {
 			logrus.WithError(err).Error("refresh token creation failed")
 			c.Status(http.StatusInternalServerError)

@@ -19,14 +19,14 @@ func DeleteToken(db *sqlx.DB) func(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, "token not valid")
 		}
 
-		claims, err := accesstoken.ParseAccessToken(accessToken)
+		claims, err := accesstoken.Parse(accessToken)
 		if err != nil {
 			c.Status(http.StatusUnauthorized)
 			return
 			// todo: handle generic errors if any
 		}
 
-		err = accesstoken.DeleteAccessToken(accessToken)
+		err = accesstoken.Delete(accessToken)
 		if err != nil {
 			if err == autherrors.ErrAuthenticationFailed {
 				c.Status(http.StatusUnauthorized)
@@ -36,7 +36,7 @@ func DeleteToken(db *sqlx.DB) func(c *gin.Context) {
 			return
 		}
 
-		err = refreshtoken.DeleteRefreshTokenBySessionId(db, claims.SessionID)
+		err = refreshtoken.DeleteBySessionId(db, claims.SessionID)
 		if err!=nil {
 			c.Status(http.StatusInternalServerError)
 		}

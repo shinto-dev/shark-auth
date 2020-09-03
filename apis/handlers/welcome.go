@@ -16,7 +16,7 @@ func Welcome(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, "token not valid")
 	}
 
-	claims, err := accesstoken.ParseAccessToken(accessToken)
+	claims, err := accesstoken.Parse(accessToken)
 	if err != nil {
 		if err == autherrors.ErrAuthenticationFailed {
 			c.Status(http.StatusUnauthorized)
@@ -25,7 +25,7 @@ func Welcome(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	logrus.Infof("request received from user: %s", claims.Username)
+	logrus.Infof("request received from user: %s", claims.UserID)
 
 	c.Writer.Write([]byte("Hello world"))
 }
