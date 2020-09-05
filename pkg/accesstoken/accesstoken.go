@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
+	"github.com/go-redis/redis/v7"
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/autherrors"
@@ -31,7 +32,7 @@ func Create(userID string, sessionID string) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
-func Parse(token string) (Claims, error) {
+func Parse(token string, redisClient *redis.Client) (Claims, error) {
 	var claims Claims
 	tkn, err := jwt.ParseWithClaims(token, &claims, func(tkn *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
@@ -49,7 +50,7 @@ func Parse(token string) (Claims, error) {
 		return Claims{}, autherrors.ErrAuthenticationFailed
 	}
 
-	isSignedout, err := checkUserIsAlreadySignedOut(token)
+	isSignedout, err := checkUserIsAlreadySignedOut(token, redisClient)
 	if err != nil {
 		return Claims{}, err
 	}
@@ -60,8 +61,8 @@ func Parse(token string) (Claims, error) {
 	return claims, nil
 }
 
-func checkUserIsAlreadySignedOut(token string) (bool, error) {
-	isBlacklisted, err := IsAccessTokenBlacklisted(token)
+func checkUserIsAlreadySignedOut(token string, redisClient *redis.Client) (bool, error) {
+	isBlacklisted, err := IsAccessTokenBlacklisted(token, redisClient)
 	if err != nil {
 		// todo also add the cause
 		return true, autherrors.ErrInternal
@@ -73,11 +74,11 @@ func checkUserIsAlreadySignedOut(token string) (bool, error) {
 	return false, nil
 }
 
-func Delete(accessToken string) error {
-	claims, err := Parse(accessToken)
+func Delete(accessToken string, redisClient *redis.Client) error {
+	claims, err := Parse(accessToken, nil)
 	if err != nil {
 		return autherrors.ErrAuthenticationFailed
 	}
 
-	return BlacklistAccessToken(accessToken, claims.ExpiresAt.Time)
+	return BlacklistAccessToken(accessToken, claims.ExpiresAt.Time, redisClient)
 }

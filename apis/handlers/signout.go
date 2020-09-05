@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v7"
 	"github.com/jmoiron/sqlx"
 
 	"shark-auth/autherrors"
@@ -12,21 +13,21 @@ import (
 	"shark-auth/pkg/refreshtoken"
 )
 
-func DeleteToken(db *sqlx.DB) func(c *gin.Context) {
+func DeleteToken(db *sqlx.DB, redisClient *redis.Client) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		accessToken := extractToken(c)
 		if accessToken == "" {
 			c.JSON(http.StatusUnauthorized, "token not valid")
 		}
 
-		claims, err := accesstoken.Parse(accessToken)
+		claims, err := accesstoken.Parse(accessToken, redisClient)
 		if err != nil {
 			c.Status(http.StatusUnauthorized)
 			return
 			// todo: handle generic errors if any
 		}
 
-		err = accesstoken.Delete(accessToken)
+		err = accesstoken.Delete(accessToken, redisClient)
 		if err != nil {
 			if err == autherrors.ErrAuthenticationFailed {
 				c.Status(http.StatusUnauthorized)
@@ -37,7 +38,7 @@ func DeleteToken(db *sqlx.DB) func(c *gin.Context) {
 		}
 
 		err = refreshtoken.DeleteBySessionId(db, claims.SessionID)
-		if err!=nil {
+		if err != nil {
 			c.Status(http.StatusInternalServerError)
 		}
 		c.Status(http.StatusOK)

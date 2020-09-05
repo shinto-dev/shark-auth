@@ -42,17 +42,13 @@ func Signup(userRepo user.UserRepository) func(c *gin.Context) {
 			return
 		}
 
-		err = userRepo.Create(user.User{
+		userRepo.Create(user.User{
 			UserId:    uuid.NewV4().String(),
 			UserName:  signupRequest.UserName,
 			Password:  hashPassword(signupRequest.Password),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		})
-		if err != nil {
-			logrus.WithError(err).Error("error inserting user")
-			c.Status(http.StatusInternalServerError)
-		}
 
 		c.Status(http.StatusOK)
 	}

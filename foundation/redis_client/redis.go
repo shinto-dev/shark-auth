@@ -1,19 +1,26 @@
 package redis_client
 
 import (
+	"fmt"
+
 	"github.com/go-redis/redis/v7"
+	"github.com/pkg/errors"
 )
 
-var  Client *redis.Client
+type Config struct {
+	Host string
+	Port int
+}
 
-func init() {
-	dsn := "localhost:6379"
+func NewRedisClient(config Config) *redis.Client {
+	dsn := fmt.Sprintf("%s:%d", config.Host, config.Port)
 
-	Client = redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Addr: dsn, //redis port
 	})
-	_, err := Client.Ping().Result()
+	_, err := client.Ping().Result()
 	if err != nil {
-		panic(err)
+		panic(errors.Wrap(err, "error while connecting to redis"))
 	}
+	return client
 }

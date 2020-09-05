@@ -61,5 +61,5 @@ func getMigrate(db *sqlx.DB) (*migrate.Migrate, error) {
 	}
 	return migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"shark-auth", driver)
+		"shark-auth", driver) //todo remove hardcoding
 }

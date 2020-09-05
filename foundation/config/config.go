@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -22,12 +20,14 @@ func init() {
 }
 
 func GetString(key string) string {
-	fmt.Println(viper.ConfigFileUsed())
-	fmt.Println(viper.GetString(key))
 	return viper.GetString(key)
 }
 
 func GetStringOrDefault(key string, defaultValue string) string {
 	viper.SetDefault(key, defaultValue)
 	return viper.GetString(key)
+}
+
+func GetInt(key string) int {
+	return viper.GetInt(key)
 }

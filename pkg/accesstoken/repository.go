@@ -4,15 +4,20 @@ import (
 	"fmt"
 	"time"
 
-	"shark-auth/foundation/redis_client"
+	"github.com/go-redis/redis/v7"
 )
 
-func BlacklistAccessToken(accessToken string, expiresAt time.Time) error {
-	return redis_client.Client.Set(blacklistAccessTokenKey(accessToken), true, expiresAt.Sub(time.Now())).Err()
+type AccessTokenBlacklistStore interface {
+	Add(accessToken string, expiresAt time.Time) error
+	Exists(accessToken string) (bool, error)
 }
 
-func IsAccessTokenBlacklisted(accessToken string) (bool, error) {
-	cmd := redis_client.Client.Exists(blacklistAccessTokenKey(accessToken))
+func BlacklistAccessToken(accessToken string, expiresAt time.Time, redisClient *redis.Client) error {
+	return redisClient.Set(blacklistAccessTokenKey(accessToken), true, expiresAt.Sub(time.Now())).Err()
+}
+
+func IsAccessTokenBlacklisted(accessToken string, redisClient *redis.Client) (bool, error) {
+	cmd := redisClient.Exists(blacklistAccessTokenKey(accessToken))
 	if cmd.Err() != nil {
 		return false, cmd.Err()
 	}

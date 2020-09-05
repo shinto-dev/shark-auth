@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"shark-auth/pkg/accesstoken"
+	"shark-auth/pkg/errorcode"
 	"shark-auth/pkg/refreshtoken"
 	"shark-auth/pkg/user"
 )
@@ -24,11 +25,12 @@ type GetTokenResponse struct {
 	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
-func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
+func CreateToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var getTokenRequest GetTokenRequest
 		if err := c.ShouldBindJSON(&getTokenRequest); err != nil {
-			c.JSON(http.StatusBadRequest, "Invalid json provided")
+			response := NewErrorResponse(errorcode.ERROR_BAD_REQUEST, "invalid json provided")
+			c.JSON(http.StatusBadRequest, response)
 			return
 		}
 
@@ -43,7 +45,8 @@ func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 		if currentUser == (user.User{}) || !passwordMatch(currentUser.Password, getTokenRequest.Password) {
 			logrus.WithField("user_name", getTokenRequest.UserName).
 				Error("password does not match")
-			c.Status(http.StatusUnauthorized)
+			response := NewErrorResponse(errorcode.ERROR_PASSWORD_MISMATCH, "password does not match")
+			c.JSON(http.StatusUnauthorized, response)
 			return
 		}
 
@@ -67,7 +70,7 @@ func GetToken(userRepo user.UserRepository, db *sqlx.DB) func(c *gin.Context) {
 			AccessToken:  tkn,
 			RefreshToken: refreshTkn,
 		}
-		c.JSON(http.StatusOK, response)
+		c.JSON(http.StatusOK, NewSuccessResponse(response))
 	}
 }
 

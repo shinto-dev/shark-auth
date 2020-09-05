@@ -4,6 +4,7 @@ import (
 	"shark-auth/commands"
 	"shark-auth/foundation/config"
 	"shark-auth/foundation/database"
+	"shark-auth/foundation/redis_client"
 )
 
 func main() {
@@ -18,7 +19,12 @@ func main() {
 		panic("error opening DB connection")
 	}
 
-	cli := commands.NewCLI(db)
+	redisClient := redis_client.NewRedisClient(redis_client.Config{
+		Host: config.GetStringOrDefault("redis.host", "localhost"),
+		Port: config.GetInt("redis.port"),
+	})
+
+	cli := commands.NewCLI(db, redisClient)
 	//cli.Version = fmt.Sprintf("%s (Commit: %s)", version, commit)
 	err = cli.Execute()
 	if err != nil {
