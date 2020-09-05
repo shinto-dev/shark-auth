@@ -6,3 +6,5 @@
 </h1>
 
 Shark-Auth is an authentication service.
+
+[![Go Report](https://goreportcard.com/badge/github.com/shintoz007/shark-auth)](https://goreportcard.com/report/github.com/shintoz007/shark-auth)
