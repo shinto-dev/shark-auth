@@ -7,7 +7,7 @@ import (
 	"shark-auth/commands"
 	"shark-auth/foundation/config"
 	"shark-auth/foundation/database"
-	"shark-auth/foundation/redis_client"
+	"shark-auth/foundation/redisclient"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func run() error {
 		return errors.Wrap(err, "error opening DB connection")
 	}
 
-	redisClient, err := redis_client.NewRedisClient(redis_client.Config{
+	redisClient, err := redisclient.NewRedisClient(redisclient.Config{
 		Host: config.GetStringOrDefault("redis.host", "localhost"),
 		Port: config.GetInt("redis.port"),
 	})
