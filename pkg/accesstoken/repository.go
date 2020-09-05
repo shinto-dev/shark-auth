@@ -7,17 +7,27 @@ import (
 	"github.com/go-redis/redis/v7"
 )
 
-type AccessTokenBlacklistStore interface {
+type BlacklistStore interface {
 	Add(accessToken string, expiresAt time.Time) error
 	Exists(accessToken string) (bool, error)
 }
 
-func BlacklistAccessToken(accessToken string, expiresAt time.Time, redisClient *redis.Client) error {
-	return redisClient.Set(blacklistAccessTokenKey(accessToken), true, expiresAt.Sub(time.Now())).Err()
+func NewBlacklistStore(redisClient *redis.Client) BlacklistStore {
+	return &AccessTokenBlacklist{
+		redisClient: redisClient,
+	}
 }
 
-func IsAccessTokenBlacklisted(accessToken string, redisClient *redis.Client) (bool, error) {
-	cmd := redisClient.Exists(blacklistAccessTokenKey(accessToken))
+type AccessTokenBlacklist struct {
+	redisClient *redis.Client
+}
+
+func (a *AccessTokenBlacklist) Add(accessToken string, expiresAt time.Time) error {
+	return a.redisClient.Set(blacklistAccessTokenKey(accessToken), true, expiresAt.Sub(time.Now())).Err()
+}
+
+func (a *AccessTokenBlacklist) Exists(accessToken string) (bool, error) {
+	cmd := a.redisClient.Exists(blacklistAccessTokenKey(accessToken))
 	if cmd.Err() != nil {
 		return false, cmd.Err()
 	}

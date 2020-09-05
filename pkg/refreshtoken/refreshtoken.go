@@ -3,11 +3,10 @@ package refreshtoken
 import (
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	uuid "github.com/satori/go.uuid"
 )
 
-func Create(db *sqlx.DB, userID string, sessionID string) (string, error) {
+func Create(tokenStore TokenStore, userID string, sessionID string) (string, error) {
 	userRefreshToken := UserRefreshToken{
 		UserID:       userID,
 		RefreshToken: uuid.NewV4().String(),
@@ -15,8 +14,7 @@ func Create(db *sqlx.DB, userID string, sessionID string) (string, error) {
 		ExpiresAt:    time.Now().Add(7 * 24 * time.Hour),
 		CreatedAt:    time.Now(),
 	}
-	repo := NewUserRefreshTokenRepository(db)
-	err := repo.Create(userRefreshToken)
+	err := tokenStore.Create(userRefreshToken)
 	if err != nil {
 		return "", err
 	}
@@ -24,13 +22,11 @@ func Create(db *sqlx.DB, userID string, sessionID string) (string, error) {
 	return userRefreshToken.RefreshToken, nil
 }
 
-func Get(db *sqlx.DB, refreshToken string) (UserRefreshToken, error) {
-	repo := NewUserRefreshTokenRepository(db)
-	return repo.Get(refreshToken)
+func Get(tokenStore TokenStore, refreshToken string) (UserRefreshToken, error) {
+	return tokenStore.Get(refreshToken)
 }
 
-func DeleteBySessionId(db *sqlx.DB, sessionID string) error {
-	repo := NewUserRefreshTokenRepository(db)
-	return repo.RemoveBySessionID(sessionID)
+func DeleteBySessionId(tokenStore TokenStore, sessionID string) error {
+	return tokenStore.RemoveBySessionID(sessionID)
 }
 

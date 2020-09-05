@@ -7,22 +7,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-type UserRepository interface {
+type Repository interface {
 	Get(userName string) (User, error)
 	Create(user User)
 }
 
-type UserRepositoryImpl struct {
+type RepositoryImpl struct {
 	db *sqlx.DB
 }
 
-func NewUserRepository(db *sqlx.DB) UserRepository {
-	return UserRepositoryImpl{
+func NewUserRepository(db *sqlx.DB) Repository {
+	return RepositoryImpl{
 		db: db,
 	}
 }
 
-func (u UserRepositoryImpl) Create(user User) {
+func (u RepositoryImpl) Create(user User) {
 	_, err := u.db.NamedExec("insert into users (user_id, user_name, password, created_at, updated_at)"+
 		" values (:user_id, :user_name, :password, :created_at, :updated_at)", user)
 	if err != nil {
@@ -30,7 +30,7 @@ func (u UserRepositoryImpl) Create(user User) {
 	}
 }
 
-func (u UserRepositoryImpl) Get(userName string) (User, error) {
+func (u RepositoryImpl) Get(userName string) (User, error) {
 	// todo add unique constraint for userName
 	row := u.db.QueryRowx("select user_id, user_name, password from users where user_name=$1", userName)
 	if row.Err() != nil {

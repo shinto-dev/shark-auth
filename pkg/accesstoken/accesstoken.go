@@ -4,10 +4,9 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
-	"github.com/go-redis/redis/v7"
 	"github.com/sirupsen/logrus"
 
-	"shark-auth/autherrors"
+	"shark-auth/pkg/apperrors"
 )
 
 var jwtKey = []byte("my_secret_key")
@@ -32,7 +31,7 @@ func Create(userID string, sessionID string) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
-func Parse(token string, redisClient *redis.Client) (Claims, error) {
+func Parse(blacklistStore BlacklistStore, token string) (Claims, error) {
 	var claims Claims
 	tkn, err := jwt.ParseWithClaims(token, &claims, func(tkn *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
@@ -40,32 +39,32 @@ func Parse(token string, redisClient *redis.Client) (Claims, error) {
 	if err != nil {
 		logrus.Errorf("parsing token failed: %v", err)
 		if err == jwt.ErrSignatureInvalid {
-			return Claims{}, autherrors.ErrAuthenticationFailed
+			return Claims{}, apperrors.ErrAuthenticationFailed
 		}
 		// todo this includes token expired error
-		return Claims{}, autherrors.ErrInvalidToken
+		return Claims{}, apperrors.ErrInvalidToken
 	}
 
 	if !tkn.Valid {
-		return Claims{}, autherrors.ErrAuthenticationFailed
+		return Claims{}, apperrors.ErrAuthenticationFailed
 	}
 
-	isSignedout, err := checkUserIsAlreadySignedOut(token, redisClient)
+	isSignedout, err := checkUserIsAlreadySignedOut(token, blacklistStore)
 	if err != nil {
 		return Claims{}, err
 	}
 	if isSignedout {
-		return Claims{}, autherrors.ErrAuthenticationFailed
+		return Claims{}, apperrors.ErrAuthenticationFailed
 	}
 
 	return claims, nil
 }
 
-func checkUserIsAlreadySignedOut(token string, redisClient *redis.Client) (bool, error) {
-	isBlacklisted, err := IsAccessTokenBlacklisted(token, redisClient)
+func checkUserIsAlreadySignedOut(token string, blacklistStore BlacklistStore) (bool, error) {
+	isBlacklisted, err := blacklistStore.Exists(token)
 	if err != nil {
 		// todo also add the cause
-		return true, autherrors.ErrInternal
+		return true, apperrors.ErrInternal
 	}
 
 	if isBlacklisted {
@@ -74,11 +73,11 @@ func checkUserIsAlreadySignedOut(token string, redisClient *redis.Client) (bool,
 	return false, nil
 }
 
-func Delete(accessToken string, redisClient *redis.Client) error {
-	claims, err := Parse(accessToken, nil)
+func BlackList(blacklistStore BlacklistStore, accessToken string) error {
+	claims, err := Parse(blacklistStore, accessToken)
 	if err != nil {
-		return autherrors.ErrAuthenticationFailed
+		return apperrors.ErrAuthenticationFailed
 	}
 
-	return BlacklistAccessToken(accessToken, claims.ExpiresAt.Time, redisClient)
+	return blacklistStore.Add(accessToken, claims.ExpiresAt.Time)
 }

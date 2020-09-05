@@ -19,7 +19,7 @@ func PanicHandlerMiddleware() gin.HandlerFunc {
 				logrus.WithField("stacktrace", fmt.Sprintf("%+v", getPanicErr(r))).
 					Error("Unexpected error")
 				c.JSON(http.StatusBadRequest,
-					handlers.NewErrorResponse(errorcode.ERROR_INTERNAL_ERROR, "internal-error"))
+					handlers.NewErrorResponse(errorcode.ERROR_INTERNAL, "internal-error"))
 				return
 			}
 		}()

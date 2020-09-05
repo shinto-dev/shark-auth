@@ -2,60 +2,42 @@ package handlers
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/jmoiron/sqlx"
 
+	"shark-auth/internal/signupuser"
+	"shark-auth/pkg/apperrors"
 	"shark-auth/pkg/user"
 )
 
-type SignupRequest struct {
-	UserName string
-	Password string
-}
-
 // this is a very basic signup api
-func Signup(userRepo user.UserRepository) func(c *gin.Context) {
+func HandleUserSignup(db *sqlx.DB) func(c *gin.Context) {
+	userRepo := user.NewUserRepository(db)
+
+	type SignupRequest struct {
+		UserName string
+		Password string
+	}
+
 	return func(c *gin.Context) {
-		// todo validations
 		var signupRequest SignupRequest
 		if err := c.ShouldBindJSON(&signupRequest); err != nil {
-			c.JSON(http.StatusBadRequest, "Invalid json provided")
+			handleError(c, apperrors.ErrInvalidJson)
 			return
 		}
 
-		currentUser, err := userRepo.Get(signupRequest.UserName)
-		if err != nil {
-			// todo panic from calling function
-			logrus.WithError(err).Error("error while retrieving user")
-			c.Status(http.StatusInternalServerError)
-			return
+		// todo validations
+		userDetails := signupuser.User{
+			UserName: signupRequest.UserName,
+			Password: signupRequest.Password,
 		}
 
-		if currentUser != (user.User{}) {
-			logrus.WithField("user_name", signupRequest.UserName).
-				Error("user name already taken")
-			c.Status(http.StatusBadRequest)
+		if err := signupuser.CreateUser(userRepo, userDetails); err != nil {
+			handleError(c, err)
 			return
 		}
-
-		userRepo.Create(user.User{
-			UserId:    uuid.NewV4().String(),
-			UserName:  signupRequest.UserName,
-			Password:  hashPassword(signupRequest.Password),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		})
 
 		c.Status(http.StatusOK)
 	}
-}
-
-func hashPassword(password string) string {
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
-	// todo handle this error
-	return string(hashedPassword)
 }

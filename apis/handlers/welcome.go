@@ -4,28 +4,28 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v7"
 	"github.com/sirupsen/logrus"
 
-	"shark-auth/autherrors"
 	"shark-auth/pkg/accesstoken"
 )
 
-func Welcome(c *gin.Context) {
-	accessToken := extractToken(c)
-	if accessToken == "" {
-		c.JSON(http.StatusUnauthorized, "token not valid")
-	}
+func HandleWelcome(redisClient *redis.Client) func(c *gin.Context) {
+	blacklistStore := accesstoken.NewBlacklistStore(redisClient)
 
-	claims, err := accesstoken.Parse(accessToken, nil)
-	if err != nil {
-		if err == autherrors.ErrAuthenticationFailed {
-			c.Status(http.StatusUnauthorized)
+	return func(c *gin.Context) {
+		accessToken := extractToken(c)
+		if accessToken == "" {
+			c.JSON(http.StatusUnauthorized, "token not valid")
+		}
+
+		claims, err := accesstoken.Parse(blacklistStore, accessToken)
+		if err != nil {
+			handleError(c, err)
 			return
 		}
-		c.Status(http.StatusBadRequest)
-		return
-	}
-	logrus.Infof("request received from user: %s", claims.UserID)
+		logrus.Infof("request received from user: %s", claims.UserID)
 
-	c.Writer.Write([]byte("Hello world"))
+		c.Writer.Write([]byte("Hello world"))
+	}
 }

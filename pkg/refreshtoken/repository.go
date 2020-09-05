@@ -7,12 +7,18 @@ import (
 	"github.com/pkg/errors"
 )
 
+type TokenStore interface {
+	Create(refreshToken UserRefreshToken) error
+	Get(refreshToken string) (UserRefreshToken, error)
+	RemoveBySessionID(sessionID string) error
+}
+
 type UserRefreshTokenRepository struct {
 	db *sqlx.DB
 }
 
-func NewUserRefreshTokenRepository(db *sqlx.DB) UserRefreshTokenRepository {
-	return UserRefreshTokenRepository{db: db}
+func NewRefreshTokenStore(db *sqlx.DB) TokenStore {
+	return &UserRefreshTokenRepository{db: db}
 }
 
 func (r *UserRefreshTokenRepository) Create(refreshToken UserRefreshToken) error {

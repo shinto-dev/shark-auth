@@ -8,7 +8,6 @@ import (
 
 	"shark-auth/apis/handlers"
 	"shark-auth/apis/middlewares"
-	"shark-auth/pkg/user"
 )
 
 func API(db *sqlx.DB, redisClient *redis.Client) *gin.Engine {
@@ -16,10 +15,10 @@ func API(db *sqlx.DB, redisClient *redis.Client) *gin.Engine {
 
 	r := gin.Default()
 	r.Use(middlewares.PanicHandlerMiddleware())
-	r.POST("/signup", handlers.Signup(user.NewUserRepository(db)))
-	r.POST("/token", handlers.CreateToken(user.NewUserRepository(db), db))
-	r.GET("/welcome", handlers.Welcome)
-	r.PATCH("/token", handlers.RefreshToken(db))
-	r.DELETE("/token", handlers.DeleteToken(db, redisClient))
+	r.POST("/signup", handlers.HandleUserSignup(db))
+	r.POST("/token", handlers.HandleTokenCreate(db))
+	r.GET("/welcome", handlers.HandleWelcome(redisClient))
+	r.PATCH("/token", handlers.HandleTokenRefresh(db))
+	r.DELETE("/token", handlers.HandleTokenDelete(db, redisClient))
 	return r
 }

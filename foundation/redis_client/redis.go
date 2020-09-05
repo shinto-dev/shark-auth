@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v7"
-	"github.com/pkg/errors"
 )
 
 type Config struct {
@@ -12,7 +11,7 @@ type Config struct {
 	Port int
 }
 
-func NewRedisClient(config Config) *redis.Client {
+func NewRedisClient(config Config) (*redis.Client, error) {
 	dsn := fmt.Sprintf("%s:%d", config.Host, config.Port)
 
 	client := redis.NewClient(&redis.Options{
@@ -20,7 +19,7 @@ func NewRedisClient(config Config) *redis.Client {
 	})
 	_, err := client.Ping().Result()
 	if err != nil {
-		panic(errors.Wrap(err, "error while connecting to redis"))
+		return nil, err
 	}
-	return client
+	return client, nil
 }

@@ -6,39 +6,36 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 
-	"shark-auth/pkg/accesstoken"
+	"shark-auth/internal/createtokens"
+	"shark-auth/pkg/apperrors"
 	"shark-auth/pkg/refreshtoken"
 )
 
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
+func HandleTokenRefresh(db *sqlx.DB) func(c *gin.Context) {
+	type RefreshTokenRequest struct {
+		RefreshToken string `json:"refresh_token"`
+	}
 
-func RefreshToken(db *sqlx.DB) func(c *gin.Context) {
+	type RefreshTokenResponse struct {
+		AccessToken string `json:"access_token"`
+	}
+
+	refreshTokenStore := refreshtoken.NewRefreshTokenStore(db)
+
 	return func(c *gin.Context) {
 		var refreshTokenRequest RefreshTokenRequest
 		if err := c.BindJSON(&refreshTokenRequest); err != nil {
-			c.Status(http.StatusInternalServerError)
+			handleError(c, apperrors.ErrInvalidJson)
 			return
 		}
 
-		userRefreshToken, err := refreshtoken.Get(db, refreshTokenRequest.RefreshToken)
+		jwtToken, err := createtokens.UsingRefreshToken(refreshTokenStore, refreshTokenRequest.RefreshToken)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
-		}
-		if userRefreshToken == (refreshtoken.UserRefreshToken{}) {
-			c.JSON(http.StatusUnauthorized, "refresh token not valid")
+			handleError(c, err)
 			return
 		}
 
-		jwtToken, err := accesstoken.Create(userRefreshToken.UserID, userRefreshToken.SessionID)
-		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
-		}
-
-		response := GetTokenResponse{AccessToken: jwtToken}
-		c.JSON(http.StatusOK, response)
+		response := RefreshTokenResponse{AccessToken: jwtToken}
+		c.JSON(http.StatusOK, NewSuccessResponse(response))
 	}
 }
