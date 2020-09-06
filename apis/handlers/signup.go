@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 
 	"shark-auth/internal/signupuser"
@@ -12,7 +11,7 @@ import (
 )
 
 // this is a very basic signup api
-func HandleUserSignup(db *sqlx.DB) func(c *gin.Context) {
+func HandleUserSignup(db *sqlx.DB) http.HandlerFunc {
 	userRepo := user.NewUserRepository(db)
 
 	type SignupRequest struct {
@@ -20,10 +19,10 @@ func HandleUserSignup(db *sqlx.DB) func(c *gin.Context) {
 		Password string
 	}
 
-	return func(c *gin.Context) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var signupRequest SignupRequest
-		if err := c.ShouldBindJSON(&signupRequest); err != nil {
-			handleError(c, apperrors.ErrInvalidJson)
+		if err := readBody(r, signupRequest); err != nil {
+			HandleError(w, apperrors.ErrInvalidJson)
 			return
 		}
 
@@ -34,10 +33,10 @@ func HandleUserSignup(db *sqlx.DB) func(c *gin.Context) {
 		}
 
 		if err := signupuser.CreateUser(userRepo, userDetails); err != nil {
-			handleError(c, err)
+			HandleError(w, err)
 			return
 		}
 
-		c.Status(http.StatusOK)
+		handleSuccess(w, nil)
 	}
 }

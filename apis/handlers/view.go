@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/pkg/apperrors"
@@ -12,8 +13,8 @@ import (
 
 type GenericResponse struct {
 	Success bool        `json:"success"`
-	Data    interface{} `json:"data"`
-	Error   Error       `json:"error"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   Error       `json:"error,omitempty"`
 }
 
 type Error struct {
@@ -39,19 +40,13 @@ func NewSuccessResponse(Data interface{}) GenericResponse {
 	}
 }
 
-func handleError(c *gin.Context, err error) {
-	errorCode := mapErrorCodeFor(err)
-	logrus.WithError(err).
-		WithField("error_code", errorCode).
-		Error("error while creating tokens")
-	c.JSON(mapHttpStatusFor(errorCode), NewErrorResponse(errorCode, ""))
-}
-
 func mapErrorCodeFor(err error) string {
 	switch err {
 	case apperrors.ErrPasswordMismatch:
 		return errorcode.ERROR_AUTHENTICATION_FAILED
 	case apperrors.ErrUserNotFound:
+		return errorcode.ERROR_AUTHENTICATION_FAILED
+	case apperrors.ErrAccessTokenNotValid:
 		return errorcode.ERROR_AUTHENTICATION_FAILED
 	case apperrors.ErrInvalidToken:
 		return errorcode.ERROR_BAD_REQUEST
@@ -74,5 +69,31 @@ func mapHttpStatusFor(errorCode string) int {
 		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
+	}
+}
+
+func readBody(r *http.Request, data interface{}) error {
+	return json.NewDecoder(r.Body).Decode(data)
+}
+
+func handleSuccess(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK) // todo: might not be ok always
+	if err := json.NewEncoder(w).Encode(NewSuccessResponse(data)); err != nil {
+		logrus.Error("writing response json failed")
+	}
+}
+
+func HandleError(w http.ResponseWriter, err error) {
+	errorCode := mapErrorCodeFor(err)
+	logrus.WithError(err).
+		WithField("stacktrace", fmt.Sprintf("%+v", err)).
+		WithField("error_code", errorCode).
+		Error(err.Error())
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(mapHttpStatusFor(errorCode))
+	if err := json.NewEncoder(w).Encode(NewErrorResponse(errorCode, "")); err != nil {
+		logrus.Error("writing response json failed")
 	}
 }

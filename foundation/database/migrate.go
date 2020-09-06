@@ -9,7 +9,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // The database driver in use.
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,6 +33,7 @@ func MigrateUp(db *sqlx.DB) error {
 	return nil
 }
 
+// Does th rollback. The DB will go to the previous state.
 func MigrateDown(db *sqlx.DB) error {
 	m, err := getMigrate(db)
 	if err != nil {

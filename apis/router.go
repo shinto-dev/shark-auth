@@ -1,8 +1,10 @@
 package apis
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	"github.com/go-redis/redis/v7"
+	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 
@@ -10,15 +12,15 @@ import (
 	"shark-auth/apis/middlewares"
 )
 
-func API(db *sqlx.DB, redisClient *redis.Client) *gin.Engine {
+func API(db *sqlx.DB, redisClient *redis.Client) http.Handler {
 	logrus.Info("starting server")
+	r := mux.NewRouter()
+	r.Use(middlewares.PanicHandlerMiddleware)
+	r.HandleFunc("/signup", handlers.HandleUserSignup(db)).Methods(http.MethodPost)
+	r.HandleFunc("/token", handlers.HandleTokenCreate(db)).Methods(http.MethodPost)
+	r.HandleFunc("/welcome", handlers.HandleWelcome(redisClient)).Methods(http.MethodGet)
+	r.HandleFunc("/token", handlers.HandleTokenRefresh(db)).Methods(http.MethodPatch)
+	r.HandleFunc("/token", handlers.HandleTokenDelete(db, redisClient)).Methods(http.MethodDelete)
 
-	r := gin.Default()
-	r.Use(middlewares.PanicHandlerMiddleware())
-	r.POST("/signup", handlers.HandleUserSignup(db))
-	r.POST("/token", handlers.HandleTokenCreate(db))
-	r.GET("/welcome", handlers.HandleWelcome(redisClient))
-	r.PATCH("/token", handlers.HandleTokenRefresh(db))
-	r.DELETE("/token", handlers.HandleTokenDelete(db, redisClient))
 	return r
 }

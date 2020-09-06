@@ -3,29 +3,31 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v7"
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/pkg/accesstoken"
+	"shark-auth/pkg/apperrors"
 )
 
-func HandleWelcome(redisClient *redis.Client) func(c *gin.Context) {
+// a sample api which can be used for testing the authentication
+func HandleWelcome(redisClient *redis.Client) http.HandlerFunc {
 	blacklistStore := accesstoken.NewBlacklistStore(redisClient)
 
-	return func(c *gin.Context) {
-		accessToken := extractToken(c)
+	return func(w http.ResponseWriter, r *http.Request) {
+		accessToken := extractToken(r)
 		if accessToken == "" {
-			c.JSON(http.StatusUnauthorized, "token not valid")
+			HandleError(w, apperrors.ErrAccessTokenNotValid)
+			return
 		}
 
 		claims, err := accesstoken.Parse(blacklistStore, accessToken)
 		if err != nil {
-			handleError(c, err)
+			HandleError(w, err)
 			return
 		}
 		logrus.Infof("request received from user: %s", claims.UserID)
 
-		c.Writer.Write([]byte("Hello world"))
+		handleSuccess(w, "Hello world")
 	}
 }

@@ -28,6 +28,7 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "error opening DB connection")
 	}
+	defer db.Close()
 
 	redisClient, err := redisclient.NewRedisClient(redisclient.Config{
 		Host: config.GetStringOrDefault("redis.host", "localhost"),
@@ -36,6 +37,7 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "error opening redis connection")
 	}
+	defer redisClient.Close()
 
 	cli := commands.NewCLI(db, redisClient)
 	//cli.Version = fmt.Sprintf("%s (Commit: %s)", version, commit)
