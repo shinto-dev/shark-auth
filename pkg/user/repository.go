@@ -16,6 +16,7 @@ type RepositoryImpl struct {
 	db *sqlx.DB
 }
 
+//NewUserRepository returns new user repository
 func NewUserRepository(db *sqlx.DB) Repository {
 	return RepositoryImpl{
 		db: db,

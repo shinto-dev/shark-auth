@@ -17,6 +17,8 @@ type Config struct {
 	DisableTLS bool
 }
 
+//Open opens and returns new postgres connection
+//todo create a struct and return
 func Open(cfg Config) (*sqlx.DB, error) {
 	sslMode := "require"
 	if cfg.DisableTLS {

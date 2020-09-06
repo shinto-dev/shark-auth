@@ -9,7 +9,7 @@ import (
 	"shark-auth/pkg/user"
 )
 
-// this is a very basic signup api
+//HandleUserSignup is a very basic signup api
 func HandleUserSignup(userRepo user.Repository) http.HandlerFunc {
 	type SignupRequest struct {
 		UserName string

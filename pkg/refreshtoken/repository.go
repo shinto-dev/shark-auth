@@ -21,6 +21,7 @@ func NewRefreshTokenStore(db *sqlx.DB) TokenStore {
 	return &UserRefreshTokenRepository{db: db}
 }
 
+//Create creates new refresh token entry into the database
 func (r *UserRefreshTokenRepository) Create(refreshToken UserRefreshToken) error {
 	_, err := r.db.NamedExec("insert into refresh_tokens (refresh_token, user_id, session_id, expires_at, created_at)"+
 		" values (:refresh_token, :user_id, :session_id, :expires_at, :created_at)", refreshToken)

@@ -10,7 +10,7 @@ import (
 	"shark-auth/pkg/apperrors"
 )
 
-// a sample api which can be used for testing the authentication
+//HandleWelcome is a sample api which can be used for testing the authentication
 func HandleWelcome(blacklistStore accesstoken.BlacklistStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accessToken := extractToken(r)

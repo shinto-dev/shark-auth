@@ -11,7 +11,7 @@ type Config struct {
 	Port int
 }
 
-// creates and returns a redis client with the configs passed.
+//NewRedisClient creates and returns a redis client with the configs passed.
 func NewRedisClient(config Config) (*redis.Client, error) {
 	dsn := fmt.Sprintf("%s:%d", config.Host, config.Port)
 
