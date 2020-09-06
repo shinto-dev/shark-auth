@@ -10,7 +10,7 @@ import (
 	"shark-auth/pkg/apperrors"
 )
 
-func Create(userRepo Repository, userName string, password string) {
+func Create(userRepo Repository, userName string, password string) error {
 	user := User{
 		UserId:    uuid.NewV4().String(),
 		UserName:  userName,
@@ -18,7 +18,7 @@ func Create(userRepo Repository, userName string, password string) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	userRepo.Create(user)
+	return userRepo.Create(user)
 }
 
 func ExistsByUserName(userRepo Repository, userName string) (bool, error) {

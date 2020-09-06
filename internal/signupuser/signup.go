@@ -15,6 +15,5 @@ func CreateUser(userRepo user.Repository, userDetail User) error {
 		return apperrors.ErrUserNameNotAvailable
 	}
 
-	user.Create(userRepo, userDetail.UserName, userDetail.Password)
-	return nil
+	return user.Create(userRepo, userDetail.UserName, userDetail.Password)
 }

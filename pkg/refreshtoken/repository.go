@@ -25,7 +25,7 @@ func (r *UserRefreshTokenRepository) Create(refreshToken UserRefreshToken) error
 	_, err := r.db.NamedExec("insert into refresh_tokens (refresh_token, user_id, session_id, expires_at, created_at)"+
 		" values (:refresh_token, :user_id, :session_id, :expires_at, :created_at)", refreshToken)
 	if err != nil {
-		panic(errors.Wrap(err, "error while inserting into DB"))
+		return errors.Wrap(err, "error while inserting into DB")
 	}
 	return nil
 }
@@ -33,7 +33,7 @@ func (r *UserRefreshTokenRepository) Create(refreshToken UserRefreshToken) error
 func (r *UserRefreshTokenRepository) Get(refreshToken string) (UserRefreshToken, error) {
 	row := r.db.QueryRowx("select * from refresh_tokens where refresh_token=$1 and deleted=false", refreshToken)
 	if row.Err() != nil {
-		panic(errors.Wrap(row.Err(), "error while querying DB"))
+		return UserRefreshToken{}, errors.Wrap(row.Err(), "error while querying DB")
 	}
 
 	var userRefreshToken UserRefreshToken
@@ -50,7 +50,7 @@ func (r *UserRefreshTokenRepository) Get(refreshToken string) (UserRefreshToken,
 func (r *UserRefreshTokenRepository) RemoveBySessionID(sessionID string) error {
 	_, err := r.db.Exec("update refresh_tokens set deleted=true where session_id=$1", sessionID)
 	if err != nil {
-		panic(errors.Wrap(err, "error while updating DB"))
+		return errors.Wrap(err, "error while updating DB")
 	}
 	return nil
 }

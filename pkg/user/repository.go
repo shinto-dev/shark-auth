@@ -8,8 +8,8 @@ import (
 )
 
 type Repository interface {
+	Create(user User) error
 	Get(userName string) (User, error)
-	Create(user User)
 }
 
 type RepositoryImpl struct {
@@ -22,19 +22,21 @@ func NewUserRepository(db *sqlx.DB) Repository {
 	}
 }
 
-func (u RepositoryImpl) Create(user User) {
+func (u RepositoryImpl) Create(user User) error {
 	_, err := u.db.NamedExec("insert into users (user_id, user_name, password, created_at, updated_at)"+
 		" values (:user_id, :user_name, :password, :created_at, :updated_at)", user)
 	if err != nil {
-		panic(errors.Wrap(err, "error while inserting into DB"))
+		return errors.Wrap(err, "error while inserting into DB")
 	}
+
+	return nil
 }
 
 func (u RepositoryImpl) Get(userName string) (User, error) {
 	// todo add unique constraint for userName
 	row := u.db.QueryRowx("select user_id, user_name, password from users where user_name=$1", userName)
 	if row.Err() != nil {
-		panic(errors.Wrap(row.Err(), "error while querying DB"))
+		return User{}, errors.Wrap(row.Err(), "error while querying DB")
 	}
 
 	var user User
