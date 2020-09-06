@@ -33,7 +33,7 @@ func MigrateUp(db *sqlx.DB) error {
 	return nil
 }
 
-// Does th rollback. The DB will go to the previous state.
+//MigrateDown does the rollback. The DB will go to the previous state.
 func MigrateDown(db *sqlx.DB) error {
 	m, err := getMigrate(db)
 	if err != nil {

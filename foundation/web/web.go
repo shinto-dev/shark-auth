@@ -19,7 +19,7 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// Creates success response
+//NewSuccessResponse creates new success response
 func NewSuccessResponse(Data interface{}) GenericResponse {
 	return GenericResponse{
 		Success: true,
@@ -27,7 +27,7 @@ func NewSuccessResponse(Data interface{}) GenericResponse {
 	}
 }
 
-// Creates error response
+//NewErrorResponse creates error response
 func NewErrorResponse(code string, message string) GenericResponse {
 	return GenericResponse{
 		Success: false,
