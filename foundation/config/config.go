@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// todo no init() if possible
 func init() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
