@@ -3,17 +3,14 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/jmoiron/sqlx"
-
+	"shark-auth/foundation/web"
 	"shark-auth/internal/signupuser"
 	"shark-auth/pkg/apperrors"
 	"shark-auth/pkg/user"
 )
 
 // this is a very basic signup api
-func HandleUserSignup(db *sqlx.DB) http.HandlerFunc {
-	userRepo := user.NewUserRepository(db)
-
+func HandleUserSignup(userRepo user.Repository) http.HandlerFunc {
 	type SignupRequest struct {
 		UserName string
 		Password string
@@ -37,6 +34,6 @@ func HandleUserSignup(db *sqlx.DB) http.HandlerFunc {
 			return
 		}
 
-		handleSuccess(w, nil)
+		web.HandleSuccess(r.Context(), w, nil)
 	}
 }

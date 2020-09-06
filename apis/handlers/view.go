@@ -7,38 +7,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"shark-auth/foundation/web"
 	"shark-auth/pkg/apperrors"
 	"shark-auth/pkg/errorcode"
 )
-
-type GenericResponse struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   Error       `json:"error,omitempty"`
-}
-
-type Error struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-func NewErrorResponse(code string, message string) GenericResponse {
-	return GenericResponse{
-		Success: false,
-		Data:    nil,
-		Error: Error{
-			Code:    code,
-			Message: message,
-		},
-	}
-}
-
-func NewSuccessResponse(Data interface{}) GenericResponse {
-	return GenericResponse{
-		Success: true,
-		Data:    Data,
-	}
-}
 
 func mapErrorCodeFor(err error) string {
 	switch err {
@@ -76,14 +48,6 @@ func readBody(r *http.Request, data interface{}) error {
 	return json.NewDecoder(r.Body).Decode(data)
 }
 
-func handleSuccess(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK) // todo: might not be ok always
-	if err := json.NewEncoder(w).Encode(NewSuccessResponse(data)); err != nil {
-		logrus.Error("writing response json failed")
-	}
-}
-
 func HandleError(w http.ResponseWriter, err error) {
 	errorCode := mapErrorCodeFor(err)
 	logrus.WithError(err).
@@ -93,7 +57,7 @@ func HandleError(w http.ResponseWriter, err error) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(mapHttpStatusFor(errorCode))
-	if err := json.NewEncoder(w).Encode(NewErrorResponse(errorCode, "")); err != nil {
+	if err := json.NewEncoder(w).Encode(web.NewErrorResponse(errorCode, "")); err != nil {
 		logrus.Error("writing response json failed")
 	}
 }
