@@ -15,7 +15,7 @@ func HandleWelcome(blacklistStore accesstoken.BlacklistStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accessToken := extractToken(r)
 		if accessToken == "" {
-			HandleError(w, apperror.ErrAccessTokenNotValid)
+			HandleError(w, apperror.NewError(apperror.CodeInvalidAccessToken, "access token not valid"))
 			return
 		}
 

@@ -39,7 +39,7 @@ func (t TokenServer) HandleTokenCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var getTokenRequest GetTokenRequest
 		if err := readBody(r, &getTokenRequest); err != nil {
-			HandleError(w, apperror.ErrInvalidJson)
+			HandleError(w, apperror.NewError(apperror.CodeInvalidRequest, "invalid json"))
 			return
 		}
 
@@ -69,7 +69,7 @@ func (t TokenServer) HandleTokenRefresh() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var refreshTokenRequest RefreshTokenRequest
 		if err := readBody(r, &refreshTokenRequest); err != nil {
-			HandleError(w, apperror.ErrInvalidJson)
+			HandleError(w, apperror.NewError(apperror.CodeInvalidRequest, "invalid json"))
 			return
 		}
 
@@ -88,7 +88,7 @@ func (t TokenServer) HandleTokenDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accessToken := extractToken(r)
 		if accessToken == "" {
-			HandleError(w, apperror.ErrAccessTokenNotValid)
+			HandleError(w, apperror.NewError(apperror.CodeInvalidAccessToken, "access token not valid"))
 			return
 		}
 

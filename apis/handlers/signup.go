@@ -18,8 +18,8 @@ func HandleUserSignup(userRepo user.Repository) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var signupRequest SignupRequest
-		if err := readBody(r, signupRequest); err != nil {
-			HandleError(w, apperror.ErrInvalidJson)
+		if err := readBody(r, &signupRequest); err != nil {
+			HandleError(w, apperror.NewErrorWithCause(apperror.CodeInvalidRequest, "invalid json", err))
 			return
 		}
 

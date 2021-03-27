@@ -9,35 +9,22 @@ import (
 
 	"shark-auth/foundation/web"
 	"shark-auth/pkg/apperror"
-	"shark-auth/pkg/errorcode"
 )
 
-func mapErrorCodeFor(err error) string {
-	switch err {
-	case apperror.ErrPasswordMismatch:
-		return errorcode.ERROR_AUTHENTICATION_FAILED
-	case apperror.ErrUserNotFound:
-		return errorcode.ERROR_AUTHENTICATION_FAILED
-	case apperror.ErrAccessTokenNotValid:
-		return errorcode.ERROR_AUTHENTICATION_FAILED
-	case apperror.ErrInvalidToken:
-		return errorcode.ERROR_BAD_REQUEST
-	case apperror.ErrInvalidJson:
-		return errorcode.ERROR_BAD_REQUEST
-	case apperror.ErrUserNameNotAvailable:
-		return errorcode.USERNAME_NOT_AVAILABLE
-	default:
-		return errorcode.ERROR_INTERNAL
+func mapErrorCodeFor(err error) apperror.Code {
+	appErr, ok := err.(apperror.Error)
+	if !ok {
+		return apperror.CodeInternalError
 	}
+
+	return appErr.Code
 }
 
-func mapHttpStatusFor(errorCode string) int {
+func mapHttpStatusFor(errorCode apperror.Code) int {
 	switch errorCode {
-	case errorcode.ERROR_AUTHENTICATION_FAILED:
+	case apperror.CodeAuthenticationFailed:
 		return http.StatusUnauthorized
-	case errorcode.ERROR_BAD_REQUEST:
-		return http.StatusBadRequest
-	case errorcode.USERNAME_NOT_AVAILABLE:
+	case apperror.CodeInvalidRequest:
 		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError

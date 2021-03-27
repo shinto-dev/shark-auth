@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"shark-auth/pkg/apperror"
 
 	"shark-auth/foundation/logging"
 )
@@ -28,12 +29,12 @@ func NewSuccessResponse(Data interface{}) GenericResponse {
 }
 
 //NewErrorResponse creates error response
-func NewErrorResponse(code string, message string) GenericResponse {
+func NewErrorResponse(code apperror.Code, message string) GenericResponse {
 	return GenericResponse{
 		Success: false,
 		Data:    nil,
 		Error: Error{
-			Code:    code,
+			Code:    string(code),
 			Message: message,
 		},
 	}

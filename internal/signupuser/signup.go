@@ -12,7 +12,7 @@ func CreateUser(userRepo user.Repository, userDetail User) error {
 	}
 
 	if exists {
-		return apperror.ErrUserNameNotAvailable
+		return apperror.NewError(apperror.CodeInvalidRequest, "user name already taken")
 	}
 
 	return user.Create(userRepo, userDetail.UserName, userDetail.Password)

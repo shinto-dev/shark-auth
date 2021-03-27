@@ -37,11 +37,11 @@ func GetByUserNameAndPassword(userRepo Repository, userName string, password str
 	}
 
 	if user == (User{}) {
-		return User{}, apperror.ErrUserNotFound
+		return User{}, apperror.NewError(apperror.CodeUserNotFound, "user not found")
 	}
 
 	if !passwordMatch(user.Password, password) {
-		return User{}, apperror.ErrPasswordMismatch
+		return User{}, apperror.NewError(apperror.CodePasswordMismatch, "")
 	}
 	return user, err
 }

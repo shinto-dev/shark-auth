@@ -13,7 +13,7 @@ func UsingRefreshToken(store refreshtoken.TokenStore, refreshToken string) (stri
 	}
 
 	if userRefreshToken == (refreshtoken.UserRefreshToken{}) {
-		return "", apperror.ErrRefreshTokenNotValid
+		return "", apperror.NewError(apperror.CodeInvalidRefreshToken, "refresh token is invalid")
 	}
 
 	jwtToken, err := accesstoken.Create(userRefreshToken.UserID, userRefreshToken.SessionID)
