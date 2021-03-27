@@ -2,7 +2,7 @@ package createtokens
 
 import (
 	"shark-auth/pkg/accesstoken"
-	"shark-auth/pkg/apperrors"
+	"shark-auth/pkg/apperror"
 	"shark-auth/pkg/refreshtoken"
 )
 
@@ -13,7 +13,7 @@ func UsingRefreshToken(store refreshtoken.TokenStore, refreshToken string) (stri
 	}
 
 	if userRefreshToken == (refreshtoken.UserRefreshToken{}) {
-		return "", apperrors.ErrRefreshTokenNotValid
+		return "", apperror.ErrRefreshTokenNotValid
 	}
 
 	jwtToken, err := accesstoken.Create(userRefreshToken.UserID, userRefreshToken.SessionID)

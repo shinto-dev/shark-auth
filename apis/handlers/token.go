@@ -9,7 +9,7 @@ import (
 	"shark-auth/internal/createtokens"
 	"shark-auth/internal/revoketokens"
 	"shark-auth/pkg/accesstoken"
-	"shark-auth/pkg/apperrors"
+	"shark-auth/pkg/apperror"
 	"shark-auth/pkg/refreshtoken"
 	"shark-auth/pkg/user"
 )
@@ -39,7 +39,7 @@ func (t TokenServer) HandleTokenCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var getTokenRequest GetTokenRequest
 		if err := readBody(r, &getTokenRequest); err != nil {
-			HandleError(w, apperrors.ErrInvalidJson)
+			HandleError(w, apperror.ErrInvalidJson)
 			return
 		}
 
@@ -69,7 +69,7 @@ func (t TokenServer) HandleTokenRefresh() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var refreshTokenRequest RefreshTokenRequest
 		if err := readBody(r, &refreshTokenRequest); err != nil {
-			HandleError(w, apperrors.ErrInvalidJson)
+			HandleError(w, apperror.ErrInvalidJson)
 			return
 		}
 
@@ -88,7 +88,7 @@ func (t TokenServer) HandleTokenDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accessToken := extractToken(r)
 		if accessToken == "" {
-			HandleError(w, apperrors.ErrAccessTokenNotValid)
+			HandleError(w, apperror.ErrAccessTokenNotValid)
 			return
 		}
 

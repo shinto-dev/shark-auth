@@ -7,7 +7,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"shark-auth/pkg/apperrors"
+	"shark-auth/pkg/apperror"
 )
 
 func Create(userRepo Repository, userName string, password string) error {
@@ -37,11 +37,11 @@ func GetByUserNameAndPassword(userRepo Repository, userName string, password str
 	}
 
 	if user == (User{}) {
-		return User{}, apperrors.ErrUserNotFound
+		return User{}, apperror.ErrUserNotFound
 	}
 
 	if !passwordMatch(user.Password, password) {
-		return User{}, apperrors.ErrPasswordMismatch
+		return User{}, apperror.ErrPasswordMismatch
 	}
 	return user, err
 }

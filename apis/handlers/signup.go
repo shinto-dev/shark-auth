@@ -5,7 +5,7 @@ import (
 
 	"shark-auth/foundation/web"
 	"shark-auth/internal/signupuser"
-	"shark-auth/pkg/apperrors"
+	"shark-auth/pkg/apperror"
 	"shark-auth/pkg/user"
 )
 
@@ -19,7 +19,7 @@ func HandleUserSignup(userRepo user.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var signupRequest SignupRequest
 		if err := readBody(r, signupRequest); err != nil {
-			HandleError(w, apperrors.ErrInvalidJson)
+			HandleError(w, apperror.ErrInvalidJson)
 			return
 		}
 

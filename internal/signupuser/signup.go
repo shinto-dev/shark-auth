@@ -1,7 +1,7 @@
 package signupuser
 
 import (
-	"shark-auth/pkg/apperrors"
+	"shark-auth/pkg/apperror"
 	"shark-auth/pkg/user"
 )
 
@@ -12,7 +12,7 @@ func CreateUser(userRepo user.Repository, userDetail User) error {
 	}
 
 	if exists {
-		return apperrors.ErrUserNameNotAvailable
+		return apperror.ErrUserNameNotAvailable
 	}
 
 	return user.Create(userRepo, userDetail.UserName, userDetail.Password)

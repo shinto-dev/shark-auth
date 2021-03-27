@@ -8,23 +8,23 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/foundation/web"
-	"shark-auth/pkg/apperrors"
+	"shark-auth/pkg/apperror"
 	"shark-auth/pkg/errorcode"
 )
 
 func mapErrorCodeFor(err error) string {
 	switch err {
-	case apperrors.ErrPasswordMismatch:
+	case apperror.ErrPasswordMismatch:
 		return errorcode.ERROR_AUTHENTICATION_FAILED
-	case apperrors.ErrUserNotFound:
+	case apperror.ErrUserNotFound:
 		return errorcode.ERROR_AUTHENTICATION_FAILED
-	case apperrors.ErrAccessTokenNotValid:
+	case apperror.ErrAccessTokenNotValid:
 		return errorcode.ERROR_AUTHENTICATION_FAILED
-	case apperrors.ErrInvalidToken:
+	case apperror.ErrInvalidToken:
 		return errorcode.ERROR_BAD_REQUEST
-	case apperrors.ErrInvalidJson:
+	case apperror.ErrInvalidJson:
 		return errorcode.ERROR_BAD_REQUEST
-	case apperrors.ErrUserNameNotAvailable:
+	case apperror.ErrUserNameNotAvailable:
 		return errorcode.USERNAME_NOT_AVAILABLE
 	default:
 		return errorcode.ERROR_INTERNAL

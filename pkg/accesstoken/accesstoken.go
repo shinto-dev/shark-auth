@@ -6,7 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/sirupsen/logrus"
 
-	"shark-auth/pkg/apperrors"
+	"shark-auth/pkg/apperror"
 )
 
 var jwtKey = []byte("my_secret_key")
@@ -39,14 +39,14 @@ func Parse(blacklistStore BlacklistStore, token string) (Claims, error) {
 	if err != nil {
 		logrus.Errorf("parsing token failed: %v", err)
 		if err == jwt.ErrSignatureInvalid {
-			return Claims{}, apperrors.ErrAuthenticationFailed
+			return Claims{}, apperror.ErrAuthenticationFailed
 		}
 		// todo this includes token expired error
-		return Claims{}, apperrors.ErrInvalidToken
+		return Claims{}, apperror.ErrInvalidToken
 	}
 
 	if !tkn.Valid {
-		return Claims{}, apperrors.ErrAuthenticationFailed
+		return Claims{}, apperror.ErrAuthenticationFailed
 	}
 
 	isSignedout, err := checkUserIsAlreadySignedOut(token, blacklistStore)
@@ -54,7 +54,7 @@ func Parse(blacklistStore BlacklistStore, token string) (Claims, error) {
 		return Claims{}, err
 	}
 	if isSignedout {
-		return Claims{}, apperrors.ErrAuthenticationFailed
+		return Claims{}, apperror.ErrAuthenticationFailed
 	}
 
 	return claims, nil
@@ -64,7 +64,7 @@ func checkUserIsAlreadySignedOut(token string, blacklistStore BlacklistStore) (b
 	isBlacklisted, err := blacklistStore.Exists(token)
 	if err != nil {
 		// todo also add the cause
-		return true, apperrors.ErrInternal
+		return true, apperror.ErrInternal
 	}
 
 	if isBlacklisted {
@@ -76,7 +76,7 @@ func checkUserIsAlreadySignedOut(token string, blacklistStore BlacklistStore) (b
 func BlackList(blacklistStore BlacklistStore, accessToken string) error {
 	claims, err := Parse(blacklistStore, accessToken)
 	if err != nil {
-		return apperrors.ErrAuthenticationFailed
+		return apperror.ErrAuthenticationFailed
 	}
 
 	return blacklistStore.Add(accessToken, claims.ExpiresAt.Time)
