@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"shark-auth/pkg/apperror"
-
 	"shark-auth/foundation/logging"
+	"shark-auth/internal/apperror"
 )
 
 type GenericResponse struct {

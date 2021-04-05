@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"shark-auth/internal/apperror"
 
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/foundation/web"
-	"shark-auth/pkg/apperror"
 )
 
 func mapErrorCodeFor(err error) apperror.Code {

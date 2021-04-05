@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"net/http"
+	"shark-auth/internal"
+	"shark-auth/internal/apperror"
+	"shark-auth/internal/user"
 
 	"shark-auth/foundation/web"
-	"shark-auth/internal/signupuser"
-	"shark-auth/pkg/apperror"
-	"shark-auth/pkg/user"
 )
 
 //HandleUserSignup is a very basic signup api
@@ -24,12 +24,12 @@ func HandleUserSignup(userRepo user.Repository) http.HandlerFunc {
 		}
 
 		// todo validations
-		userDetails := signupuser.User{
+		userDetails := internal.User{
 			UserName: signupRequest.UserName,
 			Password: signupRequest.Password,
 		}
 
-		if err := signupuser.CreateUser(userRepo, userDetails); err != nil {
+		if err := internal.CreateUser(userRepo, userDetails); err != nil {
 			HandleError(w, err)
 			return
 		}

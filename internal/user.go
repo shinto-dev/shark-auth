@@ -1,9 +1,16 @@
-package signupuser
+package internal
 
 import (
-	"shark-auth/pkg/apperror"
-	"shark-auth/pkg/user"
+	"shark-auth/internal/apperror"
+	"shark-auth/internal/user"
 )
+
+type User struct {
+	UserName string
+	Password string
+}
+
+// todo add country, dob etc.
 
 func CreateUser(userRepo user.Repository, userDetail User) error {
 	exists, err := user.ExistsByUserName(userRepo, userDetail.UserName)

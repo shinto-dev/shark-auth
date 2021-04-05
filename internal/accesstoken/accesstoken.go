@@ -1,12 +1,11 @@
 package accesstoken
 
 import (
+	"shark-auth/internal/apperror"
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/sirupsen/logrus"
-
-	"shark-auth/pkg/apperror"
 )
 
 var jwtKey = []byte("my_secret_key")

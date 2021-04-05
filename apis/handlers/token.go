@@ -2,16 +2,15 @@ package handlers
 
 import (
 	"net/http"
+	"shark-auth/internal"
+	"shark-auth/internal/accesstoken"
+	"shark-auth/internal/apperror"
+	"shark-auth/internal/refreshtoken"
+	"shark-auth/internal/user"
 	"strings"
 
 	"shark-auth/foundation/logging"
 	"shark-auth/foundation/web"
-	"shark-auth/internal/createtokens"
-	"shark-auth/internal/revoketokens"
-	"shark-auth/pkg/accesstoken"
-	"shark-auth/pkg/apperror"
-	"shark-auth/pkg/refreshtoken"
-	"shark-auth/pkg/user"
 )
 
 type TokenServer struct {
@@ -73,7 +72,11 @@ func (t TokenServer) HandleTokenRefresh() http.HandlerFunc {
 			return
 		}
 
-		jwtToken, err := createtokens.UsingRefreshToken(t.refreshTokenStore, refreshTokenRequest.RefreshToken)
+		tokenService := internal.TokenService{
+			UserRepo:          nil,
+			RefreshTokenStore: t.refreshTokenStore,
+		}
+		jwtToken, err := tokenService.RefreshToken(refreshTokenRequest.RefreshToken)
 		if err != nil {
 			HandleError(w, err)
 			return
@@ -91,8 +94,11 @@ func (t TokenServer) HandleTokenDelete() http.HandlerFunc {
 			HandleError(w, apperror.NewError(apperror.CodeInvalidAccessToken, "access token not valid"))
 			return
 		}
-
-		err := revoketokens.UsingAccessToken(t.accessTokenBlacklistStore, t.refreshTokenStore, accessToken)
+		tokenService := internal.TokenService{
+			UserRepo:          nil,
+			RefreshTokenStore: t.refreshTokenStore,
+		}
+		err := tokenService.UsingAccessToken(t.accessTokenBlacklistStore, accessToken)
 		if err != nil {
 			HandleError(w, err)
 			return

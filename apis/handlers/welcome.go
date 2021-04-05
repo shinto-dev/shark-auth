@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"shark-auth/internal/accesstoken"
+	"shark-auth/internal/apperror"
 
 	"github.com/sirupsen/logrus"
 
 	"shark-auth/foundation/web"
-	"shark-auth/pkg/accesstoken"
-	"shark-auth/pkg/apperror"
 )
 
 //HandleWelcome is a sample api which can be used for testing the authentication

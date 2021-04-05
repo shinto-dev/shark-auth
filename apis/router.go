@@ -2,6 +2,9 @@ package apis
 
 import (
 	"net/http"
+	"shark-auth/internal/accesstoken"
+	"shark-auth/internal/refreshtoken"
+	"shark-auth/internal/user"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/mux"
@@ -10,9 +13,6 @@ import (
 
 	"shark-auth/apis/handlers"
 	"shark-auth/apis/middlewares"
-	"shark-auth/pkg/accesstoken"
-	"shark-auth/pkg/refreshtoken"
-	"shark-auth/pkg/user"
 )
 
 func API(db *sqlx.DB, redisClient *redis.Client) http.Handler {

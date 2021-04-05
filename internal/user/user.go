@@ -1,13 +1,12 @@
 package user
 
 import (
+	"shark-auth/internal/apperror"
 	"time"
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
-
-	"shark-auth/pkg/apperror"
 )
 
 func Create(userRepo Repository, userName string, password string) error {

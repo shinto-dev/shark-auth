@@ -29,4 +29,3 @@ func Get(tokenStore TokenStore, refreshToken string) (UserRefreshToken, error) {
 func DeleteBySessionId(tokenStore TokenStore, sessionID string) error {
 	return tokenStore.RemoveBySessionID(sessionID)
 }
-
