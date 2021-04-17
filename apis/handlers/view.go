@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"shark-auth/foundation/logging"
 	"shark-auth/internal/apperror"
-
-	"github.com/sirupsen/logrus"
 
 	"shark-auth/foundation/web"
 )
@@ -35,9 +35,9 @@ func readBody(r *http.Request, data interface{}) error {
 	return json.NewDecoder(r.Body).Decode(data)
 }
 
-func HandleError(w http.ResponseWriter, err error) {
+func HandleError(ctx context.Context, w http.ResponseWriter, err error) {
 	errorCode := mapErrorCodeFor(err)
-	logrus.WithError(err).
+	logging.FromContext(ctx).WithError(err).
 		WithField("stacktrace", fmt.Sprintf("%+v", err)).
 		WithField("error_code", errorCode).
 		Error(err.Error())
@@ -45,6 +45,6 @@ func HandleError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(mapHttpStatusFor(errorCode))
 	if err := json.NewEncoder(w).Encode(web.NewErrorResponse(errorCode, "")); err != nil {
-		logrus.Error("writing response json failed")
+		logging.FromContext(ctx).Error("writing response json failed")
 	}
 }

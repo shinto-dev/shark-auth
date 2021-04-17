@@ -28,18 +28,20 @@ func (t *TokenServer) HandleTokenCreate() http.HandlerFunc {
 		Password string `json:"password"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logging.Set(ctx, logging.KeyContext, "create-session")
+
 		var getTokenRequest GetTokenRequest
 		if err := readBody(r, &getTokenRequest); err != nil {
-			HandleError(w, apperror.NewError(apperror.CodeInvalidRequest, "invalid json"))
+			HandleError(ctx, w, apperror.NewError(apperror.CodeInvalidRequest, "invalid json"))
 			return
 		}
 
-		ctx := r.Context()
 		logging.Set(ctx, "user_name", getTokenRequest.UserName)
 
 		response, err := t.tokenService.CreateToken(getTokenRequest.UserName, getTokenRequest.Password)
 		if err != nil {
-			HandleError(w, err)
+			HandleError(ctx, w, err)
 			return
 		}
 
@@ -57,15 +59,18 @@ func (t *TokenServer) HandleTokenRefresh() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logging.Set(ctx, logging.KeyContext, "refresh-session")
+
 		var refreshTokenRequest RefreshTokenRequest
 		if err := readBody(r, &refreshTokenRequest); err != nil {
-			HandleError(w, apperror.NewError(apperror.CodeInvalidRequest, "invalid json"))
+			HandleError(ctx, w, apperror.NewError(apperror.CodeInvalidRequest, "invalid json"))
 			return
 		}
 
 		jwtToken, err := t.tokenService.RefreshToken(refreshTokenRequest.RefreshToken)
 		if err != nil {
-			HandleError(w, err)
+			HandleError(ctx, w, err)
 			return
 		}
 
@@ -76,14 +81,17 @@ func (t *TokenServer) HandleTokenRefresh() http.HandlerFunc {
 
 func (t *TokenServer) HandleTokenDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logging.Set(ctx, logging.KeyContext, "delete-session")
+
 		accessToken := extractToken(r)
 		if accessToken == "" {
-			HandleError(w, apperror.NewError(apperror.CodeInvalidAccessToken, "access token not valid"))
+			HandleError(ctx, w, apperror.NewError(apperror.CodeInvalidAccessToken, "access token not valid"))
 			return
 		}
 		err := t.tokenService.Delete(accessToken)
 		if err != nil {
-			HandleError(w, err)
+			HandleError(ctx, w, err)
 			return
 		}
 

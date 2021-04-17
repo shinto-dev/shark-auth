@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -13,7 +14,7 @@ func PanicHandlerMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				handlers.HandleError(w, getPanicErr(r))
+				handlers.HandleError(context.Background(), w, getPanicErr(r))
 				return
 			}
 		}()

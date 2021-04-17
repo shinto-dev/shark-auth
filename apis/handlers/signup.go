@@ -17,9 +17,11 @@ func HandleUserSignup(userRepo user.Repository) http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		var signupRequest SignupRequest
 		if err := readBody(r, &signupRequest); err != nil {
-			HandleError(w, apperror.NewErrorWithCause(apperror.CodeInvalidRequest, "invalid json", err))
+			HandleError(ctx, w, apperror.NewErrorWithCause(apperror.CodeInvalidRequest, "invalid json", err))
 			return
 		}
 
@@ -30,7 +32,7 @@ func HandleUserSignup(userRepo user.Repository) http.HandlerFunc {
 		}
 
 		if err := internal.CreateUser(userRepo, userDetails); err != nil {
-			HandleError(w, err)
+			HandleError(ctx, w, err)
 			return
 		}
 
