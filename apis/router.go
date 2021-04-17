@@ -2,6 +2,7 @@ package apis
 
 import (
 	"net/http"
+	"shark-auth/internal"
 	"shark-auth/internal/accesstoken"
 	"shark-auth/internal/refreshtoken"
 	"shark-auth/internal/user"
@@ -21,7 +22,12 @@ func API(db *sqlx.DB, redisClient *redis.Client) http.Handler {
 	refreshTokenRepo := refreshtoken.NewRefreshTokenStore(db)
 	accessTokenBlacklistStore := accesstoken.NewBlacklistStore(redisClient)
 
-	tokenServer := handlers.NewTokenServer(userRepo, refreshTokenRepo, accessTokenBlacklistStore)
+	tokenService := internal.TokenService{
+		UserRepo:          userRepo,
+		RefreshTokenStore: refreshTokenRepo,
+		BlacklistStore:    accessTokenBlacklistStore,
+	}
+	tokenServer := handlers.NewTokenServer(tokenService)
 
 	logrus.Info("starting server")
 	r := mux.NewRouter()

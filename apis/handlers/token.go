@@ -3,10 +3,7 @@ package handlers
 import (
 	"net/http"
 	"shark-auth/internal"
-	"shark-auth/internal/accesstoken"
 	"shark-auth/internal/apperror"
-	"shark-auth/internal/refreshtoken"
-	"shark-auth/internal/user"
 	"strings"
 
 	"shark-auth/foundation/logging"
@@ -14,23 +11,18 @@ import (
 )
 
 type TokenServer struct {
-	userRepo                  user.Repository
-	refreshTokenStore         refreshtoken.TokenStore
-	accessTokenBlacklistStore accesstoken.BlacklistStore
+	tokenService internal.TokenService
 }
 
-func NewTokenServer(UserRepo user.Repository, RefreshTokenStore refreshtoken.TokenStore,
-	AccessTokenBlacklistStore accesstoken.BlacklistStore) TokenServer {
+func NewTokenServer(tokenService internal.TokenService) TokenServer {
 	server := TokenServer{
-		userRepo:                  UserRepo,
-		refreshTokenStore:         RefreshTokenStore,
-		accessTokenBlacklistStore: AccessTokenBlacklistStore,
+		tokenService: tokenService,
 	}
 	return server
 }
 
-// This api is for creating new tokens(access token and refresh token) if the user is authenticated.
-func (t TokenServer) HandleTokenCreate() http.HandlerFunc {
+// HandleTokenCreate This api is for creating new tokens(access token and refresh token) if the user is authenticated.
+func (t *TokenServer) HandleTokenCreate() http.HandlerFunc {
 	type GetTokenRequest struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
@@ -45,8 +37,7 @@ func (t TokenServer) HandleTokenCreate() http.HandlerFunc {
 		ctx := r.Context()
 		logging.Set(ctx, "user_name", getTokenRequest.UserName)
 
-		response, err := createtokens.UsingUserCredentials(t.userRepo, t.refreshTokenStore,
-			getTokenRequest.UserName, getTokenRequest.Password)
+		response, err := t.tokenService.CreateToken(getTokenRequest.UserName, getTokenRequest.Password)
 		if err != nil {
 			HandleError(w, err)
 			return
@@ -56,7 +47,7 @@ func (t TokenServer) HandleTokenCreate() http.HandlerFunc {
 	}
 }
 
-func (t TokenServer) HandleTokenRefresh() http.HandlerFunc {
+func (t *TokenServer) HandleTokenRefresh() http.HandlerFunc {
 	type RefreshTokenRequest struct {
 		RefreshToken string `json:"refresh_token"`
 	}
@@ -72,11 +63,7 @@ func (t TokenServer) HandleTokenRefresh() http.HandlerFunc {
 			return
 		}
 
-		tokenService := internal.TokenService{
-			UserRepo:          nil,
-			RefreshTokenStore: t.refreshTokenStore,
-		}
-		jwtToken, err := tokenService.RefreshToken(refreshTokenRequest.RefreshToken)
+		jwtToken, err := t.tokenService.RefreshToken(refreshTokenRequest.RefreshToken)
 		if err != nil {
 			HandleError(w, err)
 			return
@@ -87,18 +74,14 @@ func (t TokenServer) HandleTokenRefresh() http.HandlerFunc {
 	}
 }
 
-func (t TokenServer) HandleTokenDelete() http.HandlerFunc {
+func (t *TokenServer) HandleTokenDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accessToken := extractToken(r)
 		if accessToken == "" {
 			HandleError(w, apperror.NewError(apperror.CodeInvalidAccessToken, "access token not valid"))
 			return
 		}
-		tokenService := internal.TokenService{
-			UserRepo:          nil,
-			RefreshTokenStore: t.refreshTokenStore,
-		}
-		err := tokenService.UsingAccessToken(t.accessTokenBlacklistStore, accessToken)
+		err := t.tokenService.Delete(accessToken)
 		if err != nil {
 			HandleError(w, err)
 			return

@@ -12,6 +12,7 @@ import (
 type TokenService struct {
 	UserRepo          user.Repository
 	RefreshTokenStore refreshtoken.TokenStore
+	BlacklistStore    accesstoken.BlacklistStore
 }
 
 type CreateTokenResponse struct {
@@ -25,7 +26,7 @@ func (t *TokenService) CreateToken(userName, password string) (CreateTokenRespon
 		return CreateTokenResponse{}, err
 	}
 
-	return createTokenFor(t.RefreshTokenStore, currentUser)
+	return t.createTokenFor(currentUser)
 }
 
 func (t *TokenService) RefreshToken(refreshToken string) (string, error) {
@@ -45,13 +46,13 @@ func (t *TokenService) RefreshToken(refreshToken string) (string, error) {
 	return jwtToken, nil
 }
 
-func (t *TokenService) UsingAccessToken(accessTokenBlackList accesstoken.BlacklistStore, accessToken string) error {
-	claims, err := accesstoken.Parse(accessTokenBlackList, accessToken)
+func (t *TokenService) Delete(accessToken string) error {
+	claims, err := accesstoken.Parse(t.BlacklistStore, accessToken)
 	if err != nil {
 		return err
 	}
 
-	if err = accesstoken.BlackList(accessTokenBlackList, accessToken); err != nil {
+	if err = accesstoken.BlackList(t.BlacklistStore, accessToken); err != nil {
 		return err
 	}
 
@@ -63,8 +64,7 @@ func (t *TokenService) UsingAccessToken(accessTokenBlackList accesstoken.Blackli
 }
 
 // todo more session details, device info(or browser info)?
-func createTokenFor(refreshTokenStore refreshtoken.TokenStore,
-	currentUser user.User) (CreateTokenResponse, error) {
+func (t *TokenService) createTokenFor(currentUser user.User) (CreateTokenResponse, error) {
 	sessionID := uuid.NewV4().String()
 
 	tkn, err := accesstoken.Create(currentUser.UserId, sessionID)
@@ -72,7 +72,7 @@ func createTokenFor(refreshTokenStore refreshtoken.TokenStore,
 		return CreateTokenResponse{}, errors.Wrap(err, "error while creating access token")
 	}
 
-	refreshTkn, err := refreshtoken.Create(refreshTokenStore, currentUser.UserId, sessionID)
+	refreshTkn, err := refreshtoken.Create(t.RefreshTokenStore, currentUser.UserId, sessionID)
 	if err != nil {
 		return CreateTokenResponse{}, errors.Wrap(err, "error while creating refresh token")
 	}
