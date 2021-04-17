@@ -1,8 +1,8 @@
 database:
   host: "localhost"
-  name: "shark-auth"
-  user: "shintop"
-  password:
+  name: "shark_auth"
+  user: "root"
+  password: root
 
 redis:
   host: "localhost"
