@@ -11,10 +11,10 @@ require (
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-sqlite3 v1.14.1 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.10.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

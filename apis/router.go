@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"shark-auth/internal"
 	"shark-auth/internal/accesstoken"
@@ -39,6 +40,7 @@ func API(db *sqlx.DB, redisClient *redis.Client) http.Handler {
 	r.HandleFunc("/token", tokenServer.HandleTokenDelete()).Methods(http.MethodDelete)
 
 	r.HandleFunc("/welcome", handlers.HandleWelcome(accessTokenBlacklistStore)).Methods(http.MethodGet)
+	r.Path("/metrics").Handler(promhttp.Handler())
 
 	return r
 }
